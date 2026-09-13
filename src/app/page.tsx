@@ -36,53 +36,57 @@ function countItems(section: MenuSection): number {
 /* ── Main Menu Content ───────────────────── */
 function MenuContent() {
   const searchParams = useSearchParams();
-  const [theme, setTheme] = useState<'light' | 'dark'>('light'); // LIGHT IS DEFAULT
-  const [activeOutlet, setActiveOutlet] = useState<OutletType>('landing');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'nonveg' | 'special'>('all');
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  const pillBarRef = useRef<HTMLDivElement>(null);
-
   const tableNumber = searchParams.get('table');
   const roomNumber = searchParams.get('room');
   const initialOutlet = searchParams.get('outlet');
 
   const greeting = useMemo(() => getGreeting(), []);
 
-  // Check saved theme preference (default to light)
+  // Compute initial states directly to adhere to React 19 standards
+  const [activeOutlet, setActiveOutlet] = useState<OutletType>(() => {
+    if (initialOutlet === 'bar' || initialOutlet === 'cheers') return 'cheers';
+    return 'landing';
+  });
+
+  const [theme, setTheme] = useState<'light' | 'dark'>('light'); // Light is default
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'nonveg' | 'special'>('all');
+
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
+    const isBar = initialOutlet === 'bar' || initialOutlet === 'cheers';
+    const dataset = isBar ? CHEERS_BAR_DATA : MENU_DATA;
+    const defaultSection = !isBar && greeting.activeSection
+      ? greeting.activeSection
+      : dataset[0]?.id;
+    return defaultSection ? new Set([defaultSection]) : new Set();
+  });
+
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const pillBarRef = useRef<HTMLDivElement>(null);
+
+  // Check saved theme preference asynchronously
   useEffect(() => {
-    const saved = localStorage.getItem('qah-theme') as 'light' | 'dark' | null;
-    if (saved) {
-      setTheme(saved);
+    try {
+      const saved = localStorage.getItem('qah-theme') as 'light' | 'dark' | null;
+      if (saved && (saved === 'light' || saved === 'dark')) {
+        requestAnimationFrame(() => setTheme(saved));
+      }
+    } catch {
+      // ignore storage access errors
     }
   }, []);
 
   const toggleTheme = () => {
     const next = theme === 'light' ? 'dark' : 'light';
     setTheme(next);
-    localStorage.setItem('qah-theme', next);
+    try {
+      localStorage.setItem('qah-theme', next);
+    } catch {
+      // ignore storage errors
+    }
   };
 
-  // Check outlet from URL
-  useEffect(() => {
-    if (initialOutlet === 'bar' || initialOutlet === 'cheers') {
-      setActiveOutlet('cheers');
-    }
-  }, [initialOutlet]);
-
-  // Open relevant section by default
-  useEffect(() => {
-    const dataset = activeOutlet === 'landing' ? MENU_DATA : CHEERS_BAR_DATA;
-    const defaultSection = greeting.activeSection && activeOutlet === 'landing'
-      ? greeting.activeSection
-      : dataset[0]?.id;
-    if (defaultSection) {
-      setExpandedSections(new Set([defaultSection]));
-    }
-  }, [activeOutlet, greeting.activeSection]);
-
-  // Scroll to top button
+  // Scroll to top listener
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 600);
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -282,6 +286,7 @@ function MenuContent() {
                 setActiveOutlet('landing');
                 setSearchQuery('');
                 setDietaryFilter('all');
+                setExpandedSections(new Set([MENU_DATA[0]?.id]));
               }}
               className={`py-2 px-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
                 activeOutlet === 'landing'
@@ -299,6 +304,7 @@ function MenuContent() {
                 setActiveOutlet('cheers');
                 setSearchQuery('');
                 setDietaryFilter('all');
+                setExpandedSections(new Set([CHEERS_BAR_DATA[0]?.id]));
               }}
               className={`py-2 px-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
                 activeOutlet === 'cheers'
