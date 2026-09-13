@@ -1,26 +1,262 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --gold: #C5A059;
+  --gold-dark: #8C6B1C;
+  --gold-light: #E5C07B;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-jakarta);
+  --font-serif: var(--font-cormorant);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base ────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  transition: background-color 0.4s ease, color 0.4s ease;
+}
+
+/* ═══════════════════════════════════════════ */
+/* ── LIGHT MODE: Warm Ivory Damask Elegance  */
+/* ═══════════════════════════════════════════ */
+.luxury-texture-light {
+  background-color: #FAF7F0;
+  background-image:
+    /* Warm golden vignette — top left */
+    radial-gradient(
+      ellipse 80% 60% at 0% 0%,
+      rgba(197, 160, 89, 0.08) 0%,
+      transparent 60%
+    ),
+    /* Warm golden vignette — bottom right */
+    radial-gradient(
+      ellipse 70% 50% at 100% 100%,
+      rgba(197, 160, 89, 0.06) 0%,
+      transparent 50%
+    ),
+    /* Subtle art-deco diamond lattice */
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 40px,
+      rgba(197, 160, 89, 0.035) 40px,
+      rgba(197, 160, 89, 0.035) 41px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 40px,
+      rgba(197, 160, 89, 0.035) 40px,
+      rgba(197, 160, 89, 0.035) 41px
+    ),
+    /* Soft vertical pinstripe (linen weave) */
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 3px,
+      rgba(197, 160, 89, 0.015) 3px,
+      rgba(197, 160, 89, 0.015) 4px
+    );
+  color: #0F172A;
+}
+
+/* ═══════════════════════════════════════════ */
+/* ── DARK MODE: Midnight Obsidian & Gold     */
+/* ═══════════════════════════════════════════ */
+.luxury-texture-dark {
+  background-color: #060E18;
+  background-image:
+    /* Golden atmospheric glow — top center (like a chandelier above) */
+    radial-gradient(
+      ellipse 50% 35% at 50% -5%,
+      rgba(197, 160, 89, 0.10) 0%,
+      transparent 70%
+    ),
+    /* Subtle warm corner glow — bottom right */
+    radial-gradient(
+      ellipse 40% 30% at 95% 95%,
+      rgba(197, 160, 89, 0.05) 0%,
+      transparent 60%
+    ),
+    /* Art-deco diamond lattice in gold */
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 50px,
+      rgba(197, 160, 89, 0.025) 50px,
+      rgba(197, 160, 89, 0.025) 51px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 50px,
+      rgba(197, 160, 89, 0.025) 50px,
+      rgba(197, 160, 89, 0.025) 51px
+    ),
+    /* Deep depth gradient for richness */
+    linear-gradient(
+      180deg,
+      #060E18 0%,
+      #0A1628 40%,
+      #08111F 100%
+    );
+  color: #F1F5F9;
+}
+
+/* ── Gold Text Selection ─────────────────── */
+::selection {
+  background-color: #C5A059;
+  color: #070F1A;
+}
+
+::-moz-selection {
+  background-color: #C5A059;
+  color: #070F1A;
+}
+
+/* ── Hide Scrollbar on Pill Bars ─────────── */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Focus Ring (Gold) ───────────────────── */
+input:focus,
+button:focus-visible {
+  outline: 2px solid rgba(197, 160, 89, 0.5);
+  outline-offset: 2px;
+}
+
+/* ── Gold Ornamental Divider — Light ─────── */
+.gold-divider-light {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 0 0;
+}
+.gold-divider-light::before,
+.gold-divider-light::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(140, 107, 28, 0.4),
+    transparent
+  );
+}
+
+/* ── Gold Ornamental Divider — Dark ──────── */
+.gold-divider-dark {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 0 0;
+}
+.gold-divider-dark::before,
+.gold-divider-dark::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(197, 160, 89, 0.4),
+    transparent
+  );
+}
+
+/* ── Dotted Leader Line ──────────────────── */
+.menu-item-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.menu-item-dots-light {
+  flex: 1;
+  border-bottom: 1.5px dotted rgba(140, 107, 28, 0.25);
+  min-width: 16px;
+  margin-bottom: 4px;
+}
+
+.menu-item-dots-dark {
+  flex: 1;
+  border-bottom: 1.5px dotted rgba(197, 160, 89, 0.2);
+  min-width: 16px;
+  margin-bottom: 4px;
+}
+
+/* ── Accordion Transition ────────────────── */
+.accordion-content {
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease;
+}
+
+.accordion-content.collapsed {
+  max-height: 0;
+  opacity: 0;
+}
+
+.accordion-content.expanded {
+  opacity: 1;
+}
+
+/* ── Chevron Rotation ────────────────────── */
+.chevron {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chevron.open {
+  transform: rotate(180deg);
+}
+
+/* ── Shimmer Loading ─────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(197, 160, 89, 0.06) 25%,
+    rgba(197, 160, 89, 0.18) 50%,
+    rgba(197, 160, 89, 0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ── Stagger Fade In ─────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.4s ease forwards;
 }
