@@ -652,9 +652,9 @@ function MenuContent() {
                                     }
                                   />
 
-                                  {/* Fix #5: Larger price font */}
+                                  {/* Modern sans-serif price matching item name font */}
                                   <span
-                                    className={`font-serif text-base sm:text-lg font-bold shrink-0 tabular-nums ${
+                                    className={`font-sans text-[15px] sm:text-base font-bold shrink-0 tabular-nums tracking-tight ${
                                       isLight ? 'text-[#8C6B1C]' : 'text-[#E5C07B]'
                                     }`}
                                   >
