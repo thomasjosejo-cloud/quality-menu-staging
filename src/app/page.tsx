@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import {
   Search, Phone, MessageSquare, Clock, Sparkles, X,
@@ -61,9 +62,6 @@ function MenuContent() {
   });
 
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const pillBarRef = useRef<HTMLDivElement>(null);
-
-  // Fix #16: Theme toggle animation state
   const [themeTransition, setThemeTransition] = useState(false);
 
   useEffect(() => {
@@ -73,7 +71,7 @@ function MenuContent() {
         requestAnimationFrame(() => setTheme(saved));
       }
     } catch {
-      // ignore
+      // ignore storage access errors
     }
   }, []);
 
@@ -81,7 +79,11 @@ function MenuContent() {
     setThemeTransition(true);
     const next = theme === 'light' ? 'dark' : 'light';
     setTheme(next);
-    try { localStorage.setItem('qah-theme', next); } catch { /* ignore */ }
+    try {
+      localStorage.setItem('qah-theme', next);
+    } catch {
+      // ignore
+    }
     setTimeout(() => setThemeTransition(false), 350);
   };
 
@@ -135,18 +137,6 @@ function MenuContent() {
     });
   }, []);
 
-  const jumpToSection = useCallback((sectionId: string) => {
-    setExpandedSections((prev) => {
-      const next = new Set(prev);
-      next.add(sectionId);
-      return next;
-    });
-    setTimeout(() => {
-      const el = document.getElementById(sectionId);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
-  }, []);
-
   const locationText = tableNumber
     ? `Table ${tableNumber}`
     : roomNumber
@@ -161,6 +151,26 @@ function MenuContent() {
 
   const isLight = theme === 'light';
 
+  // Ticker marquee phrases
+  const marqueeItems = activeOutlet === 'landing' ? [
+    'THE LANDING · ALL-DAY FINE DINING',
+    'KERALA’S GATEWAY · EST. 2001',
+    'CHEF’S SIGNATURE SPECIALS',
+    'AUTHENTIC MALABAR DELICACIES',
+    'FRESH CLAY TANDOOR & ROTIS',
+    'CONTINENTAL & ASIAN CLASSICS',
+    '20–30 MIN FRESH PREPARATION',
+    'ROOM SERVICE & TABLE ORDERING'
+  ] : [
+    'THE CHEERS · EXECUTIVE LOUNGE & BAR',
+    'SINGLE MALTS & PREMIUM SCOTCH',
+    'IMPORTED SPIRITS & FINE WINES',
+    'CHILLED DRAUGHT & CRAFT BEERS',
+    'RATES INCLUSIVE OF ALL TAXES',
+    'NEDUMBASSERY · COCHIN AIRPORT',
+    'ENJOY RESPONSIBLY'
+  ];
+
   return (
     <div
       className={`min-h-screen font-sans transition-colors duration-300 ${
@@ -171,114 +181,115 @@ function MenuContent() {
       <div
         className={`fixed top-0 left-0 right-0 h-44 pointer-events-none z-0 ${
           isLight
-            ? 'bg-gradient-to-b from-[#C5A059]/20 via-[#C5A059]/5 to-transparent'
+            ? 'bg-gradient-to-b from-[#C5A059]/15 via-[#C5A059]/5 to-transparent'
             : 'bg-gradient-to-b from-[#C5A059]/12 via-[#C5A059]/4 to-transparent'
         }`}
       />
 
       {/* ══════════════════════════════════════ */}
-      {/* ── HEADER ── */}
-      {/* Fix #1: Fully opaque bg (no bleed-through) */}
-      {/* Fix #2: z-40 (above all content) */}
-      {/* Fix #7: Safe-area padding for notch */}
+      {/* ── REVAMPED LUXURY HEADER ── */}
       {/* ══════════════════════════════════════ */}
       <header
-        className={`relative z-40 border-b sticky top-0 px-4 py-3 shadow-md transition-colors ${
+        className={`relative z-40 border-b sticky top-0 px-4 py-2.5 shadow-sm transition-colors ${
           isLight
-            ? 'border-[#8C6B1C]/20 bg-[#FAF7F0] shadow-amber-950/5'
-            : 'border-[#C5A059]/20 bg-[#060E18] shadow-black/30'
+            ? 'border-slate-200/80 bg-[#F8F6F0]'
+            : 'border-[#C5A059]/20 bg-[#060E18] shadow-black/40'
         }`}
-        style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
+        style={{ paddingTop: 'max(10px, env(safe-area-inset-top))' }}
       >
         <div className="max-w-xl mx-auto">
-          <div className="flex items-center justify-between">
-            <div>
-              <span
-                className={`text-[9px] tracking-[0.3em] uppercase font-bold block ${
-                  isLight ? 'text-[#8C6B1C]' : 'text-[#C5A059]'
-                }`}
-              >
-                Quality Airport Hotel · Est. 2001
-              </span>
-              <h1
-                className={`font-serif text-xl sm:text-2xl tracking-wide flex items-center gap-2 mt-0.5 ${
-                  isLight ? 'text-[#0F2238]' : 'text-white'
-                }`}
-              >
-                {activeOutlet === 'landing' ? 'The Landing' : 'The Cheers'}
-                <span
-                  className={`text-[10px] font-sans tracking-normal px-2.5 py-0.5 rounded-full border font-semibold ${
-                    isLight
-                      ? 'border-[#8C6B1C]/30 text-[#8C6B1C] bg-[#8C6B1C]/10'
-                      : 'border-[#C5A059]/40 text-[#E5C07B] bg-[#C5A059]/10'
-                  }`}
-                >
-                  {activeOutlet === 'landing' ? 'All-Day Dining' : 'Premium Bar'}
+          {/* Top Brand Bar with Official Logo */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              {/* Hotel Official Logo */}
+              <div className="relative h-8 sm:h-9 w-28 sm:w-32 shrink-0">
+                <Image
+                  src={isLight ? '/logo-light.png' : '/logo-dark.png'}
+                  alt="Quality Airport Hotels"
+                  fill
+                  priority
+                  className="object-contain object-left"
+                />
+              </div>
+
+              <div className="hidden sm:block border-l pl-2.5 border-slate-300/40 dark:border-white/15">
+                <span className="text-[9px] uppercase tracking-[0.2em] font-bold text-[#8C6B1C] dark:text-[#E5C07B] block">
+                  Cochin Airport
                 </span>
-              </h1>
-              <p
-                className={`text-[11px] italic font-serif tracking-wide mt-0.5 ${
-                  isLight ? 'text-[#705411]' : 'text-slate-400'
-                }`}
-              >
-                {activeOutlet === 'landing'
-                  ? "Kerala's Gateway · Nedumbassery"
-                  : "Executive Lounge · Nedumbassery"}
-              </p>
+                <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-serif italic">
+                  Est. 2001
+                </span>
+              </div>
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Fix #16: Theme Toggle with rotation animation */}
-              <button
-                onClick={toggleTheme}
-                aria-label="Toggle light or dark theme"
-                className={`p-2 rounded-xl border transition-all duration-300 active:scale-90 flex items-center justify-center ${
-                  isLight
-                    ? 'bg-[#EFE9DC] border-[#8C6B1C]/30 text-[#705411] hover:bg-[#E5DEC9]'
-                    : 'bg-[#0D1B2A] border-[#C5A059]/40 text-[#E5C07B] hover:bg-[#C5A059]/15'
-                }`}
-              >
-                <span className={`inline-flex transition-transform duration-300 ${themeTransition ? 'rotate-180 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`}>
-                  {isLight ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-                </span>
-              </button>
-
+              {/* Location Badge */}
               {locationText && (
                 <div
-                  className={`border rounded-xl px-3 py-1 text-right ${
+                  className={`border rounded-xl px-2.5 py-1 text-right ${
                     isLight
-                      ? 'bg-[#8C6B1C]/10 border-[#8C6B1C]/30'
-                      : 'bg-[#C5A059]/15 border-[#C5A059]/40'
+                      ? 'bg-white border-slate-200 shadow-xs'
+                      : 'bg-[#0D1B2A] border-[#C5A059]/35'
                   }`}
                 >
-                  <span className="text-[9px] text-slate-500 block uppercase font-bold tracking-wider">
+                  <span className="text-[8px] text-slate-500 uppercase font-bold tracking-wider block">
                     Location
                   </span>
                   <span
                     className={`text-xs font-bold ${
-                      isLight ? 'text-[#8C6B1C]' : 'text-[#E5C07B]'
+                      isLight ? 'text-slate-900' : 'text-[#E5C07B]'
                     }`}
                   >
                     {locationText}
                   </span>
                 </div>
               )}
+
+              {/* Theme Toggle Button */}
+              <button
+                onClick={toggleTheme}
+                aria-label="Toggle light or dark theme"
+                className={`p-2 rounded-xl border transition-all duration-300 active:scale-90 flex items-center justify-center ${
+                  isLight
+                    ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-xs'
+                    : 'bg-[#0D1B2A] border-[#C5A059]/40 text-[#E5C07B] hover:bg-[#C5A059]/15'
+                }`}
+              >
+                <span className={`inline-flex transition-transform duration-300 ${themeTransition ? 'rotate-180 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`}>
+                  {isLight ? <Moon className="w-4 h-4 text-slate-700" /> : <Sun className="w-4 h-4 text-amber-300" />}
+                </span>
+              </button>
             </div>
           </div>
 
-          {!locationText && (
-            <p className={`text-[11px] mt-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-              <span className={`font-medium ${isLight ? 'text-[#8C6B1C]' : 'text-[#E5C07B]'}`}>
-                {greeting.text}
-              </span>{' '}
-              — Browse our authentic menu below
-            </p>
-          )}
+          {/* Outlet Subtitle & Time Greeting */}
+          <div className="flex items-center justify-between mt-2 pt-1 border-t border-slate-200/50 dark:border-white/5">
+            <div className="flex items-center gap-2">
+              <span className={`font-serif text-sm sm:text-base font-bold tracking-wide ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                {activeOutlet === 'landing' ? 'The Landing' : 'The Cheers'}
+              </span>
+              <span
+                className={`text-[9px] font-sans tracking-normal px-2 py-0.5 rounded-full font-bold uppercase ${
+                  isLight
+                    ? 'bg-[#8C6B1C]/15 text-[#705411] border border-[#8C6B1C]/25'
+                    : 'bg-[#C5A059]/15 text-[#E5C07B] border border-[#C5A059]/30'
+                }`}
+              >
+                {activeOutlet === 'landing' ? 'All-Day Dining' : 'Premium Bar'}
+              </span>
+            </div>
 
-          {/* Outlet Switcher */}
+            <p className={`text-[11px] font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+              <span className={`font-bold ${isLight ? 'text-[#8C6B1C]' : 'text-[#E5C07B]'}`}>
+                {greeting.text}
+              </span>
+            </p>
+          </div>
+
+          {/* 1-Tap Outlet Switcher */}
           <div
-            className={`mt-3 grid grid-cols-2 p-1 rounded-xl border text-xs sm:text-sm ${
-              isLight ? 'bg-[#EFE9DC] border-[#8C6B1C]/20' : 'bg-[#0D1B2A] border-white/10'
+            className={`mt-2.5 grid grid-cols-2 p-1 rounded-xl border text-xs sm:text-sm ${
+              isLight ? 'bg-[#EAE6DC]/70 border-slate-300/60' : 'bg-[#0D1B2A] border-white/10'
             }`}
           >
             <button
@@ -290,9 +301,9 @@ function MenuContent() {
               }}
               className={`py-2 px-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
                 activeOutlet === 'landing'
-                  ? 'bg-gradient-to-r from-[#C5A059] to-[#DFBE73] text-[#070F1A] font-bold shadow-md'
+                  ? 'bg-gradient-to-r from-[#C5A059] to-[#DFBE73] text-[#070F1A] font-bold shadow-sm'
                   : isLight
-                  ? 'text-slate-600 hover:text-black'
+                  ? 'text-slate-700 hover:text-black'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -308,9 +319,9 @@ function MenuContent() {
               }}
               className={`py-2 px-3 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
                 activeOutlet === 'cheers'
-                  ? 'bg-gradient-to-r from-[#C5A059] to-[#DFBE73] text-[#070F1A] font-bold shadow-md'
+                  ? 'bg-gradient-to-r from-[#C5A059] to-[#DFBE73] text-[#070F1A] font-bold shadow-sm'
                   : isLight
-                  ? 'text-slate-600 hover:text-black'
+                  ? 'text-slate-700 hover:text-black'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
@@ -322,13 +333,36 @@ function MenuContent() {
       </header>
 
       {/* ══════════════════════════════════════ */}
-      {/* ── CONTROLS ── */}
+      {/* ── LUXURY INFINITE MARQUEE TICKER ── */}
+      {/* Replaces the clunky pill row with motion */}
       {/* ══════════════════════════════════════ */}
-      <div className="max-w-xl mx-auto px-4 pt-4 pb-2 relative z-10">
+      <div
+        className={`border-y overflow-hidden relative z-20 py-1.5 backdrop-blur-xs select-none ${
+          isLight
+            ? 'bg-white/80 border-slate-200/90 text-slate-800 shadow-[0_1px_3px_rgba(0,0,0,0.02)]'
+            : 'bg-[#091524] border-[#C5A059]/20 text-slate-300'
+        }`}
+      >
+        <div className="animate-marquee whitespace-nowrap text-[10px] sm:text-[11px] font-semibold tracking-[0.2em] uppercase flex items-center">
+          {/* Loop twice for seamless infinite scroll */}
+          {[...marqueeItems, ...marqueeItems].map((item, idx) => (
+            <span key={idx} className="flex items-center">
+              <span className={`mx-3 text-[9px] ${isLight ? 'text-[#8C6B1C]' : 'text-[#C5A059]'}`}>✦</span>
+              <span>{item}</span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════ */}
+      {/* ── CONTROLS: Search + Dietary Filters ── */}
+      {/* ══════════════════════════════════════ */}
+      <div className="max-w-xl mx-auto px-4 pt-3.5 pb-2 relative z-10">
+        {/* Search */}
         <div className="relative">
           <Search
             className={`absolute left-3.5 top-3 w-4 h-4 ${
-              isLight ? 'text-[#8C6B1C]' : 'text-[#C5A059]'
+              isLight ? 'text-slate-500' : 'text-[#C5A059]'
             }`}
           />
           <input
@@ -342,7 +376,7 @@ function MenuContent() {
             }
             className={`w-full rounded-xl pl-10 pr-10 py-2.5 text-sm transition focus:outline-none ${
               isLight
-                ? 'bg-white border border-[#8C6B1C]/25 text-[#0F172A] placeholder-slate-400 shadow-sm focus:border-[#8C6B1C]'
+                ? 'bg-white border border-slate-200/90 text-slate-900 placeholder-slate-400 shadow-xs focus:border-[#8C6B1C]'
                 : 'bg-[#0D1B2A] border border-[#C5A059]/20 text-white placeholder-slate-500 focus:border-[#C5A059]/60'
             }`}
           />
@@ -356,7 +390,7 @@ function MenuContent() {
           )}
         </div>
 
-        {/* Dietary Filters */}
+        {/* Dietary Filters (Landing only) */}
         {activeOutlet === 'landing' && (
           <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-none text-xs">
             {[
@@ -364,36 +398,36 @@ function MenuContent() {
                 key: 'all' as const,
                 label: 'All Items',
                 activeCls: isLight
-                  ? 'bg-[#8C6B1C] text-white border-[#8C6B1C]'
+                  ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
                   : 'bg-[#C5A059] text-black border-[#C5A059]',
                 inactiveCls: isLight
-                  ? 'bg-white text-slate-700 border-[#8C6B1C]/20 shadow-xs'
+                  ? 'bg-white text-slate-700 border-slate-200/90 shadow-xs hover:border-slate-300'
                   : 'bg-[#0D1B2A] text-slate-300 border-white/10'
               },
               {
                 key: 'veg' as const,
                 label: 'Veg Only',
-                activeCls: 'bg-emerald-600 text-white border-emerald-500',
+                activeCls: 'bg-emerald-700 text-white border-emerald-700 shadow-xs',
                 inactiveCls: isLight
-                  ? 'bg-white text-slate-700 border-[#8C6B1C]/20 shadow-xs'
+                  ? 'bg-white text-slate-700 border-slate-200/90 shadow-xs hover:border-slate-300'
                   : 'bg-[#0D1B2A] text-slate-300 border-white/10',
                 dot: 'bg-emerald-500'
               },
               {
                 key: 'nonveg' as const,
                 label: 'Non-Veg',
-                activeCls: 'bg-red-700 text-white border-red-600',
+                activeCls: 'bg-rose-700 text-white border-rose-700 shadow-xs',
                 inactiveCls: isLight
-                  ? 'bg-white text-slate-700 border-[#8C6B1C]/20 shadow-xs'
+                  ? 'bg-white text-slate-700 border-slate-200/90 shadow-xs hover:border-slate-300'
                   : 'bg-[#0D1B2A] text-slate-300 border-white/10',
-                dot: 'bg-red-500'
+                dot: 'bg-rose-500'
               },
               {
                 key: 'special' as const,
                 label: 'Chef Specials',
-                activeCls: 'bg-amber-600 text-white border-amber-500',
+                activeCls: 'bg-amber-700 text-white border-amber-700 shadow-xs',
                 inactiveCls: isLight
-                  ? 'bg-white text-slate-700 border-[#8C6B1C]/20 shadow-xs'
+                  ? 'bg-white text-slate-700 border-slate-200/90 shadow-xs hover:border-slate-300'
                   : 'bg-[#0D1B2A] text-slate-300 border-white/10',
                 icon: true
               }
@@ -406,37 +440,12 @@ function MenuContent() {
                 }`}
               >
                 {f.dot && <span className={`w-2 h-2 rounded-full ${f.dot} inline-block`} />}
-                {/* Fix #11: Sparkles icon color adaptive */}
-                {f.icon && <Sparkles className={`w-3 h-3 ${isLight ? 'text-amber-600' : 'text-amber-300'}`} />}
+                {f.icon && <Sparkles className={`w-3 h-3 ${isLight ? 'text-amber-300' : 'text-amber-300'}`} />}
                 {f.label}
               </button>
             ))}
           </div>
         )}
-
-        {/* Section Jump Pills */}
-        <div ref={pillBarRef} className="flex gap-2 mt-3 overflow-x-auto pb-2 scrollbar-none">
-          {activeDataset.map((sec) => {
-            const itemCount = countItems(sec);
-            return (
-              <button
-                key={sec.id}
-                onClick={() => jumpToSection(sec.id)}
-                className={`px-3 py-1.5 text-[11px] font-serif rounded-lg border whitespace-nowrap transition active:scale-95 ${
-                  isLight
-                    ? 'bg-white/80 border-[#8C6B1C]/25 text-[#8C6B1C] hover:bg-[#8C6B1C]/10 shadow-xs'
-                    : 'bg-[#0D1B2A] border-[#C5A059]/25 text-[#E5C07B] hover:border-[#C5A059] hover:bg-[#C5A059]/10'
-                }`}
-              >
-                {sec.romanNumeral ? `${sec.romanNumeral}. ` : ''}
-                {sec.title}
-                <span className={isLight ? 'text-slate-400 ml-1' : 'text-slate-500 ml-1'}>
-                  ({itemCount})
-                </span>
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* ══════════════════════════════════════ */}
@@ -444,16 +453,16 @@ function MenuContent() {
       {/* ══════════════════════════════════════ */}
       <main className="max-w-xl mx-auto px-4 pb-36 space-y-4 relative z-10 pt-1">
         {filteredSections.length === 0 ? (
-          /* Fix #13: Larger empty state button */
+          /* Empty State */
           <div className="text-center py-20 text-slate-400">
             <Search
               className={`w-10 h-10 mx-auto mb-3 ${
-                isLight ? 'text-[#8C6B1C]/40' : 'text-[#C5A059]/40'
+                isLight ? 'text-slate-400' : 'text-[#C5A059]/40'
               }`}
             />
             <p
               className={`text-lg font-serif ${
-                isLight ? 'text-[#8C6B1C]' : 'text-[#E5C07B]/80'
+                isLight ? 'text-slate-800 font-bold' : 'text-[#E5C07B]/80'
               }`}
             >
               No items found
@@ -466,7 +475,7 @@ function MenuContent() {
               }}
               className={`text-sm px-5 py-2.5 rounded-lg border transition font-medium ${
                 isLight
-                  ? 'bg-[#8C6B1C]/10 border-[#8C6B1C]/30 text-[#8C6B1C] hover:bg-[#8C6B1C]/20'
+                  ? 'bg-white border-slate-300 text-slate-800 hover:bg-slate-50 shadow-xs'
                   : 'bg-[#C5A059]/15 border-[#C5A059]/30 text-[#E5C07B] hover:bg-[#C5A059]/25'
               }`}
             >
@@ -482,9 +491,8 @@ function MenuContent() {
               <section
                 key={section.id}
                 id={section.id}
-                /* Fix #6: Increased scroll-mt to clear header */
-                className="scroll-mt-52 fade-in-up"
-                style={{ animationDelay: `${sectionIndex * 50}ms` }}
+                className="scroll-mt-48 fade-in-up"
+                style={{ animationDelay: `${sectionIndex * 40}ms` }}
               >
                 {/* Accordion Header */}
                 <button
@@ -494,8 +502,8 @@ function MenuContent() {
                   <div className="flex items-center justify-between py-3">
                     <div className="flex-1">
                       <h2
-                        className={`font-serif text-lg sm:text-xl tracking-wide flex items-center gap-1.5 ${
-                          isLight ? 'text-[#0F2238]' : 'text-[#E5C07B]'
+                        className={`font-serif text-lg sm:text-xl tracking-wide flex items-center gap-1.5 font-bold ${
+                          isLight ? 'text-slate-900' : 'text-[#E5C07B]'
                         }`}
                       >
                         {section.romanNumeral && (
@@ -519,7 +527,7 @@ function MenuContent() {
                       {section.subtitle && (
                         <p
                           className={`text-[11px] mt-0.5 font-serif italic ${
-                            isLight ? 'text-[#705411]' : 'text-slate-400'
+                            isLight ? 'text-slate-600' : 'text-slate-400'
                           }`}
                         >
                           {section.subtitle}
@@ -561,7 +569,7 @@ function MenuContent() {
                   </div>
                 </button>
 
-                {/* Fix #3: Accordion uses 9999px max-height to never clip */}
+                {/* Accordion Content */}
                 <div
                   className={`accordion-content ${isExpanded ? 'expanded' : 'collapsed'}`}
                   style={{ maxHeight: isExpanded ? '9999px' : '0' }}
@@ -569,26 +577,27 @@ function MenuContent() {
                   <div className="space-y-5 pt-3 pb-2">
                     {section.subsections?.map((sub, sIdx) => (
                       <div key={sIdx} className="space-y-2">
-                        {/* Fix #10: Subsection titles larger and bolder */}
+                        {/* Subsection Title */}
                         {sub.title && (
-                          <h3
-                            className={`text-xs uppercase tracking-[0.18em] font-extrabold pl-1 mt-1 flex items-center gap-2 ${
-                              isLight ? 'text-[#705411]' : 'text-[#C5A059]/80'
-                            }`}
-                          >
+                          <div className="pl-1">
                             <span
-                              className={`w-5 h-px ${
-                                isLight ? 'bg-[#8C6B1C]/40' : 'bg-[#C5A059]/30'
+                              className={`text-[11px] uppercase tracking-[0.18em] font-extrabold px-2.5 py-0.5 rounded-md border inline-flex items-center gap-1.5 ${
+                                isLight
+                                  ? 'text-[#705411] bg-[#F2EDE2] border-[#8C6B1C]/20'
+                                  : 'text-[#C5A059] bg-[#C5A059]/10 border-[#C5A059]/20'
                               }`}
-                            />
-                            {sub.title}
-                          </h3>
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#C5A059]" />
+                              {sub.title}
+                            </span>
+                          </div>
                         )}
 
+                        {/* SOLID Card Background for 100% Crisp Legibility */}
                         <div
                           className={`divide-y rounded-2xl border overflow-hidden transition-colors ${
                             isLight
-                              ? 'divide-[#8C6B1C]/10 bg-white/85 border-[#8C6B1C]/20 shadow-[0_2px_12px_rgba(140,107,28,0.06)]'
+                              ? 'divide-slate-100 bg-white border-slate-200/90 shadow-[0_2px_10px_rgba(15,23,42,0.03),0_1px_2px_rgba(15,23,42,0.04)]'
                               : 'divide-white/[0.04] bg-[#0D1B2A]/50 border-[#C5A059]/10'
                           }`}
                         >
@@ -598,10 +607,9 @@ function MenuContent() {
                             return (
                               <div
                                 key={item.id}
-                                /* Fix #8: Larger touch targets */
                                 className={`px-4 py-3.5 transition-colors group border-l-2 border-transparent ${
                                   isLight
-                                    ? 'hover:bg-[#8C6B1C]/[0.05] active:bg-[#8C6B1C]/[0.08] hover:border-[#8C6B1C]/50'
+                                    ? 'hover:bg-slate-50/80 active:bg-slate-100/80 hover:border-[#8C6B1C]/50'
                                     : 'hover:bg-[#C5A059]/[0.04] active:bg-[#C5A059]/[0.07] hover:border-[#C5A059]/40'
                                 }`}
                               >
@@ -621,64 +629,65 @@ function MenuContent() {
                                     </span>
                                   )}
 
-                                  {/* Fix #4: Larger item name font */}
+                                  {/* Item Name */}
                                   <h4
-                                    className={`text-sm sm:text-base font-semibold transition shrink-0 ${
+                                    className={`text-[15px] sm:text-base font-semibold transition shrink-0 ${
                                       isLight
-                                        ? 'text-[#0F172A] group-hover:text-[#8C6B1C]'
+                                        ? 'text-slate-900 group-hover:text-[#8C6B1C]'
                                         : 'text-slate-100 group-hover:text-[#E5C07B]'
                                     }`}
                                   >
                                     {item.name}
                                   </h4>
 
+                                  {/* Chef Special Badge */}
                                   {item.isChefSpecial && (
                                     <span
                                       className={`shrink-0 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border flex items-center gap-0.5 font-bold ${
                                         isLight
-                                          ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                          ? 'bg-amber-50 text-amber-900 border-amber-300'
                                           : 'bg-gradient-to-r from-amber-500/20 to-yellow-500/15 text-amber-300 border-amber-400/30'
                                       }`}
                                     >
-                                      {/* Fix #11: Sparkles color adaptive */}
-                                      <Sparkles className={`w-2.5 h-2.5 ${isLight ? 'text-amber-700' : 'text-amber-300'}`} />
+                                      <Sparkles className={`w-2.5 h-2.5 ${isLight ? 'text-amber-600' : 'text-amber-300'}`} />
                                       Special
                                     </span>
                                   )}
 
+                                  {/* Dotted Leader Line */}
                                   <span
                                     className={
                                       isLight ? 'menu-item-dots-light' : 'menu-item-dots-dark'
                                     }
                                   />
 
-                                  {/* Modern sans-serif price matching item name font */}
+                                  {/* Price: Clean Sans-Serif Matching Item Font Family */}
                                   <span
                                     className={`font-sans text-[15px] sm:text-base font-bold shrink-0 tabular-nums tracking-tight ${
-                                      isLight ? 'text-[#8C6B1C]' : 'text-[#E5C07B]'
+                                      isLight ? 'text-slate-900' : 'text-[#E5C07B]'
                                     }`}
                                   >
                                     {typeof item.price === 'number' ? `₹${item.price}` : item.price}
                                   </span>
                                 </div>
 
-                                {/* Fix #9: Description indent conditional on veg badge */}
+                                {/* Description */}
                                 {item.description && (
                                   <p
-                                    className={`text-[11px] mt-1 leading-relaxed ${hasVegBadge ? 'pl-6' : 'pl-0'} ${
-                                      isLight ? 'text-slate-600' : 'text-slate-400/90'
+                                    className={`text-[12px] mt-1 leading-relaxed ${hasVegBadge ? 'pl-6' : 'pl-0'} ${
+                                      isLight ? 'text-slate-600 font-normal' : 'text-slate-400/90'
                                     }`}
                                   >
                                     {item.description}
                                   </p>
                                 )}
 
-                                {/* Fix #14: Replace emoji with Lucide icon */}
+                                {/* Serving Volume (Bar) */}
                                 {item.volume && (
                                   <span
                                     className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-0.5 rounded-full border mt-1.5 font-medium ${hasVegBadge ? 'ml-6' : 'ml-0'} ${
                                       isLight
-                                        ? 'bg-[#8C6B1C]/10 border-[#8C6B1C]/25 text-[#705411]'
+                                        ? 'bg-slate-100 border-slate-200 text-slate-800'
                                         : 'bg-[#C5A059]/10 border-[#C5A059]/20 text-[#E5C07B]'
                                     }`}
                                   >
@@ -702,7 +711,7 @@ function MenuContent() {
         {/* Footer */}
         <div
           className={`text-center pt-8 pb-4 border-t space-y-2 ${
-            isLight ? 'border-[#8C6B1C]/15' : 'border-white/[0.06]'
+            isLight ? 'border-slate-200/80' : 'border-white/[0.06]'
           }`}
         >
           <p
@@ -719,7 +728,6 @@ function MenuContent() {
           >
             Opposite Cochin International Airport, Nedumbassery, Ernakulam – 683 585
           </p>
-          {/* Fix #15: Tax note contrast improved in dark mode */}
           <div
             className={`flex items-center justify-center gap-1 text-[11px] ${
               isLight ? 'text-slate-500' : 'text-slate-400'
@@ -741,7 +749,7 @@ function MenuContent() {
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
           className={`fixed bottom-24 right-4 z-30 w-10 h-10 rounded-full border flex items-center justify-center shadow-lg active:scale-90 transition ${
             isLight
-              ? 'bg-white border-[#8C6B1C]/30 text-[#8C6B1C] hover:bg-[#8C6B1C]/10'
+              ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50 shadow-md'
               : 'bg-[#0D1B2A] border-[#C5A059]/40 text-[#E5C07B] hover:bg-[#C5A059]/15'
           }`}
         >
@@ -750,18 +758,16 @@ function MenuContent() {
       )}
 
       {/* ── FLOATING ACTION BAR ── */}
-      {/* Fix #7: Safe-area bottom padding for home indicator */}
-      {/* Fix #12: Gradient matches page bg color */}
       <div className="fixed bottom-0 left-0 right-0 z-20">
         <div
           className={`h-6 ${
             isLight
-              ? 'bg-gradient-to-t from-[#FAF7F0] to-transparent'
+              ? 'bg-gradient-to-t from-[#F8F6F0] to-transparent'
               : 'bg-gradient-to-t from-[#060E18] to-transparent'
           }`}
         />
         <div
-          className={`px-3 pt-1 ${isLight ? 'bg-[#FAF7F0] border-t border-[#8C6B1C]/15' : 'bg-[#060E18]'}`}
+          className={`px-3 pt-1 ${isLight ? 'bg-[#F8F6F0] border-t border-slate-200/80' : 'bg-[#060E18]'}`}
           style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
         >
           <div className="max-w-xl mx-auto flex gap-2.5">
@@ -769,7 +775,7 @@ function MenuContent() {
               href={`https://wa.me/919526319995?text=${whatsappMsg}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/30 hover:brightness-110 active:scale-[0.97] transition text-sm"
+              className="flex-1 bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:brightness-110 active:scale-[0.97] transition text-sm"
             >
               <MessageSquare className="w-4 h-4" />
               Order via WhatsApp
@@ -778,7 +784,7 @@ function MenuContent() {
               href="tel:+914842610678"
               className={`border py-3 px-4 rounded-xl flex items-center justify-center gap-2 active:scale-[0.97] transition text-sm font-medium ${
                 isLight
-                  ? 'bg-white border-[#8C6B1C]/30 text-[#8C6B1C] hover:bg-[#8C6B1C]/10'
+                  ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50 shadow-xs'
                   : 'bg-[#0D1B2A] border-[#C5A059]/40 text-[#E5C07B] hover:bg-[#C5A059]/15'
               }`}
             >
@@ -795,7 +801,7 @@ function MenuContent() {
 /* ── Shimmer Skeleton Loader ─────────────── */
 function MenuSkeleton() {
   return (
-    <div className="min-h-screen bg-[#FAF7F0] text-[#0F172A] flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-[#F8F6F0] text-[#0F172A] flex flex-col items-center justify-center p-6">
       <div className="space-y-3 w-full max-w-xs">
         <div className="text-center mb-6">
           <p className="text-[10px] tracking-[0.3em] text-[#8C6B1C] uppercase font-bold">

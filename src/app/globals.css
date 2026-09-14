@@ -20,50 +20,32 @@ html {
 body {
   font-family: var(--font-jakarta), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
-  background-color: #FAF7F0;
+  background-color: #F8F6F0;
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 /* ═══════════════════════════════════════════ */
-/* ── LIGHT MODE: Warm Ivory Damask Elegance  */
+/* ── LIGHT MODE: Crisp Luxury Ivory & Linen   */
 /* ═══════════════════════════════════════════ */
 .luxury-texture-light {
-  background-color: #FAF7F0;
+  background-color: #F8F6F0;
   background-image:
-    /* Warm golden vignette — top left */
+    /* Soft golden chandelier ambient wash */
     radial-gradient(
-      ellipse 80% 60% at 0% 0%,
-      rgba(197, 160, 89, 0.08) 0%,
-      transparent 60%
+      ellipse 80% 40% at 50% -5%,
+      rgba(197, 160, 89, 0.10) 0%,
+      transparent 70%
     ),
-    /* Warm golden vignette — bottom right */
+    /* Warm corner glow */
     radial-gradient(
-      ellipse 70% 50% at 100% 100%,
-      rgba(197, 160, 89, 0.06) 0%,
+      ellipse 60% 40% at 100% 100%,
+      rgba(197, 160, 89, 0.05) 0%,
       transparent 50%
     ),
-    /* Subtle art-deco diamond lattice */
-    repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 40px,
-      rgba(197, 160, 89, 0.035) 40px,
-      rgba(197, 160, 89, 0.035) 41px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      transparent,
-      transparent 40px,
-      rgba(197, 160, 89, 0.035) 40px,
-      rgba(197, 160, 89, 0.035) 41px
-    ),
-    /* Soft vertical pinstripe (linen weave) */
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 3px,
-      rgba(197, 160, 89, 0.015) 3px,
-      rgba(197, 160, 89, 0.015) 4px
+    radial-gradient(
+      ellipse 60% 40% at 0% 100%,
+      rgba(197, 160, 89, 0.04) 0%,
+      transparent 50%
     );
   color: #0F172A;
 }
@@ -74,34 +56,30 @@ body {
 .luxury-texture-dark {
   background-color: #060E18;
   background-image:
-    /* Golden atmospheric glow — top center (like a chandelier above) */
     radial-gradient(
       ellipse 50% 35% at 50% -5%,
-      rgba(197, 160, 89, 0.10) 0%,
+      rgba(197, 160, 89, 0.12) 0%,
       transparent 70%
     ),
-    /* Subtle warm corner glow — bottom right */
     radial-gradient(
       ellipse 40% 30% at 95% 95%,
       rgba(197, 160, 89, 0.05) 0%,
       transparent 60%
     ),
-    /* Art-deco diamond lattice in gold */
     repeating-linear-gradient(
       45deg,
       transparent,
       transparent 50px,
-      rgba(197, 160, 89, 0.025) 50px,
-      rgba(197, 160, 89, 0.025) 51px
+      rgba(197, 160, 89, 0.02) 50px,
+      rgba(197, 160, 89, 0.02) 51px
     ),
     repeating-linear-gradient(
       -45deg,
       transparent,
       transparent 50px,
-      rgba(197, 160, 89, 0.025) 50px,
-      rgba(197, 160, 89, 0.025) 51px
+      rgba(197, 160, 89, 0.02) 50px,
+      rgba(197, 160, 89, 0.02) 51px
     ),
-    /* Deep depth gradient for richness */
     linear-gradient(
       180deg,
       #060E18 0%,
@@ -154,7 +132,7 @@ button:focus-visible {
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(140, 107, 28, 0.4),
+    rgba(140, 107, 28, 0.35),
     transparent
   );
 }
@@ -188,16 +166,16 @@ button:focus-visible {
 
 .menu-item-dots-light {
   flex: 1;
-  border-bottom: 1.5px dotted rgba(140, 107, 28, 0.25);
+  border-bottom: 1.5px dotted rgba(15, 23, 42, 0.18);
   min-width: 16px;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
 .menu-item-dots-dark {
   flex: 1;
-  border-bottom: 1.5px dotted rgba(197, 160, 89, 0.2);
+  border-bottom: 1.5px dotted rgba(197, 160, 89, 0.22);
   min-width: 16px;
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 }
 
 /* ── Accordion Transition ────────────────── */
@@ -260,4 +238,26 @@ button:focus-visible {
 
 .fade-in-up {
   animation: fadeInUp 0.4s ease forwards;
+}
+
+/* ── Luxury Infinite Marquee ─────────────── */
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  will-change: transform;
+  animation: marquee 35s linear infinite;
+}
+
+.animate-marquee:hover,
+.animate-marquee:active {
+  animation-play-state: paused;
 }
