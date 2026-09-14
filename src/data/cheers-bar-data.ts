@@ -157,36 +157,30 @@ export const CHEERS_BAR_DATA: MenuSection[] = [
 
 export const CHEERS_SIGNATURES: MenuItem[] = [
   {
-    id: "sig_bar_scotch",
+    id: "sw1",
     name: "Johnnie Walker Black Label",
     price: 750,
     volume: "60 ML",
-    category: "Scotch & Premium Whiskey",
-    flavorProfile: "Rich Smoke & Dried Fruit",
+    category: "Scotch",
     isChefSpecial: true,
-    description: "Iconic master blend of 40+ whiskies aged 12 years with deep vanilla and gentle peat smoke",
     image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=600&auto=format&fit=crop&q=80"
   },
   {
-    id: "sig_bar_brandy",
-    name: "Morpheus Blue XO",
+    id: "br1",
+    name: "Morpheus Blue",
     price: 380,
     volume: "60 ML",
     category: "Brandy",
-    flavorProfile: "Velvety Honey & French Oak",
     isChefSpecial: true,
-    description: "Blended with matured grape spirits, rich vanilla and warm toasted oak finish",
     image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&auto=format&fit=crop&q=80"
   },
   {
-    id: "sig_bar_beer",
-    name: "KF Ultra Draught",
-    price: 320,
+    id: "beer1",
+    name: "Budweiser",
+    price: 340,
     volume: "650 ML",
-    category: "Beer & Wine",
-    flavorProfile: "Crisp & Clean Finish",
+    category: "Beer",
     isChefSpecial: true,
-    description: "Crafted from golden imported barley for an ultra-smooth, refreshing luxury experience",
     image: "https://images.unsplash.com/photo-1608270195577-f27429188eb2?w=600&auto=format&fit=crop&q=80"
   }
 ];
