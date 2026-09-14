@@ -1,4 +1,4 @@
-﻿import { MenuSection } from '@/types/menu';
+import { MenuSection, MenuItem } from '@/types/menu';
 
 export const MENU_DATA: MenuSection[] = [
   {
@@ -310,3 +310,51 @@ export const MENU_DATA: MenuSection[] = [
     ]
   }
 ];
+
+export const LANDING_SIGNATURES: MenuItem[] = [
+  {
+    id: "sig_fish_curry",
+    name: "Alleppey Fish Curry",
+    price: 340,
+    description: "Kingfish simmered with raw mango, cocum, thick coconut milk & roasted spices",
+    category: "Regional Specialities",
+    isVeg: false,
+    isChefSpecial: true,
+    spiceLevel: 2,
+    image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=600&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "sig_biryani",
+    name: "Thalassery Dum Biryani",
+    price: 330,
+    description: "Fragrant Kaima rice layered with tender marinated chicken, golden shallots & Malabar ghee",
+    category: "Biryani of the Day",
+    isVeg: false,
+    isChefSpecial: true,
+    spiceLevel: 2,
+    image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "sig_beef_fry",
+    name: "Syrian Beef Coconut Fry",
+    price: 350,
+    description: "Slow-roasted beef with fresh coconut chips, crushed Malabar black pepper & curry leaves",
+    category: "Regional Specialities",
+    isVeg: false,
+    isChefSpecial: true,
+    spiceLevel: 3,
+    image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80",
+  },
+  {
+    id: "sig_tandoori",
+    name: "Tandoori Murgh",
+    price: 420,
+    description: "Clay oven roasted chicken marinated in Kashmiri degi mirch, hung curd & royal cumin",
+    category: "Tandoor",
+    isVeg: false,
+    isChefSpecial: true,
+    spiceLevel: 2,
+    image: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=600&auto=format&fit=crop&q=80",
+  }
+];
+

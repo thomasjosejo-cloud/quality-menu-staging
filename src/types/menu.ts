@@ -1,4 +1,4 @@
-﻿export type OutletType = 'landing' | 'cheers';
+export type OutletType = 'landing' | 'cheers';
 
 export interface MenuItem {
   id: string;
@@ -11,6 +11,10 @@ export interface MenuItem {
   isChefSpecial?: boolean;
   volume?: string;
   timing?: string;
+  spiceLevel?: 1 | 2 | 3; // 1 = Mild, 2 = Medium, 3 = Spicy
+  isExpress?: boolean; // Ready in 15 mins (ideal for transit travelers)
+  image?: string; // Curated food photography for signature dishes
+  flavorProfile?: string; // e.g. "Peaty & Smoky", "Floral & Crisp" for bar items
 }
 
 export interface MenuSection {

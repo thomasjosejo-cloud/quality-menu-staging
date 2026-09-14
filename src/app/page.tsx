@@ -5,11 +5,12 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import {
   Search, Phone, MessageSquare, Clock, Sparkles, X,
-  Wine, UtensilsCrossed, ChevronDown, ArrowUp, Info, Sun, Moon, GlassWater
+  Wine, UtensilsCrossed, ChevronDown, ArrowUp, Info, Sun, Moon,
+  GlassWater, ShoppingBag, Plus, Minus, Trash2, BookOpen, Flame, Zap
 } from 'lucide-react';
-import { MENU_DATA } from '@/data/menu-data';
-import { CHEERS_BAR_DATA } from '@/data/cheers-bar-data';
-import { OutletType, MenuSection } from '@/types/menu';
+import { MENU_DATA, LANDING_SIGNATURES } from '@/data/menu-data';
+import { CHEERS_BAR_DATA, CHEERS_SIGNATURES } from '@/data/cheers-bar-data';
+import { OutletType, MenuSection, MenuItem } from '@/types/menu';
 
 /* ── Time-Aware Greeting ─────────────────── */
 function getGreeting(): { text: string; activeSection?: string } {
@@ -34,6 +35,36 @@ function countItems(section: MenuSection): number {
   return section.subsections?.reduce((sum, sub) => sum + sub.items.length, 0) ?? 0;
 }
 
+/* ── Keyword Highlight Helper ────────────── */
+function HighlightedText({ text, query }: { text: string; query: string }) {
+  if (!query || !query.trim()) return <>{text}</>;
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase() ? (
+          <mark
+            key={i}
+            className="bg-amber-300/40 dark:bg-amber-400/30 text-inherit font-bold rounded-xs px-0.5"
+          >
+            {part}
+          </mark>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
+
+/* ── Parse Numeric Price for Totals ───────── */
+function parsePrice(price: number | string): number {
+  if (typeof price === 'number') return price;
+  const match = price.replace(/,/g, '').match(/\d+/);
+  return match ? parseInt(match[0], 10) : 0;
+}
+
 /* ── Main Menu Content ───────────────────── */
 function MenuContent() {
   const searchParams = useSearchParams();
@@ -50,7 +81,7 @@ function MenuContent() {
 
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [searchQuery, setSearchQuery] = useState('');
-  const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'nonveg' | 'special'>('all');
+  const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'nonveg' | 'special' | 'express'>('all');
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(() => {
     const isBar = initialOutlet === 'bar' || initialOutlet === 'cheers';
@@ -64,6 +95,13 @@ function MenuContent() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [themeTransition, setThemeTransition] = useState(false);
 
+  /* ── 9.8+ Interactive Tray & Category Drawer State ── */
+  const [tray, setTray] = useState<Record<string, { item: MenuItem; quantity: number }>>({});
+  const [isTrayOpen, setIsTrayOpen] = useState(false);
+  const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState(false);
+  const [specialNotes, setSpecialNotes] = useState('');
+
+  // Load saved theme
   useEffect(() => {
     try {
       const saved = localStorage.getItem('qah-theme') as 'light' | 'dark' | null;
@@ -71,7 +109,7 @@ function MenuContent() {
         requestAnimationFrame(() => setTheme(saved));
       }
     } catch {
-      // ignore storage access errors
+      // ignore
     }
   }, []);
 
@@ -94,7 +132,9 @@ function MenuContent() {
   }, []);
 
   const activeDataset: MenuSection[] = activeOutlet === 'landing' ? MENU_DATA : CHEERS_BAR_DATA;
+  const activeSignatures: MenuItem[] = activeOutlet === 'landing' ? LANDING_SIGNATURES : CHEERS_SIGNATURES;
 
+  // Filter items
   const filteredSections = useMemo(() => {
     return activeDataset
       .map((section) => {
@@ -111,6 +151,7 @@ function MenuContent() {
               if (dietaryFilter === 'veg') matchesDiet = item.isVeg === true;
               if (dietaryFilter === 'nonveg') matchesDiet = item.isVeg === false;
               if (dietaryFilter === 'special') matchesDiet = item.isChefSpecial === true;
+              if (dietaryFilter === 'express') matchesDiet = item.isExpress === true;
 
               return matchesSearch && matchesDiet;
             });
@@ -137,17 +178,107 @@ function MenuContent() {
     });
   }, []);
 
+  const jumpToSection = useCallback((sectionId: string) => {
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      next.add(sectionId);
+      return next;
+    });
+    setIsCategoryDrawerOpen(false);
+    setTimeout(() => {
+      const el = document.getElementById(sectionId);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 150);
+  }, []);
+
+  /* ── Tray Manipulation ── */
+  const addToTray = (item: MenuItem) => {
+    setTray((prev) => {
+      const existing = prev[item.id];
+      return {
+        ...prev,
+        [item.id]: {
+          item,
+          quantity: existing ? existing.quantity + 1 : 1,
+        },
+      };
+    });
+  };
+
+  const decrementTray = (itemId: string) => {
+    setTray((prev) => {
+      const existing = prev[itemId];
+      if (!existing) return prev;
+      if (existing.quantity <= 1) {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      }
+      return {
+        ...prev,
+        [itemId]: {
+          ...existing,
+          quantity: existing.quantity - 1,
+        },
+      };
+    });
+  };
+
+  const removeFromTray = (itemId: string) => {
+    setTray((prev) => {
+      const next = { ...prev };
+      delete next[itemId];
+      return next;
+    });
+  };
+
+  const clearTray = () => setTray({});
+
+  const totalTrayCount = useMemo(() => {
+    return Object.values(tray).reduce((sum, entry) => sum + entry.quantity, 0);
+  }, [tray]);
+
+  const totalTrayPrice = useMemo(() => {
+    return Object.values(tray).reduce((sum, entry) => {
+      return sum + parsePrice(entry.item.price) * entry.quantity;
+    }, 0);
+  }, [tray]);
+
   const locationText = tableNumber
     ? `Table ${tableNumber}`
     : roomNumber
       ? `Room ${roomNumber}`
       : null;
 
-  const whatsappMsg = encodeURIComponent(
-    `Hello Quality Airport Hotel! I am viewing the digital menu${locationText ? ` at ${locationText}` : ''} (${
-      activeOutlet === 'landing' ? 'The Landing' : 'The Cheers Bar'
-    }). I would like to place an order.`
-  );
+  /* ── 9.8+ Structured WhatsApp Message Builder ── */
+  const buildWhatsAppUrl = () => {
+    let msg = `*🛎️ QUALITY AIRPORT HOTEL — ORDER REQUEST*\n`;
+    msg += `*Outlet:* ${activeOutlet === 'landing' ? 'The Landing (Dining)' : 'The Cheers (Bar)'}\n`;
+    if (tableNumber) msg += `*Table:* ${tableNumber}\n`;
+    if (roomNumber) msg += `*Room:* ${roomNumber}\n`;
+    msg += `────────────────────────\n`;
+
+    if (totalTrayCount > 0) {
+      msg += `*ITEMS ORDERED:*\n`;
+      Object.values(tray).forEach((entry, idx) => {
+        const itemTotal = typeof entry.item.price === 'number'
+          ? `₹${entry.item.price * entry.quantity}`
+          : `${entry.item.price}`;
+        msg += `${idx + 1}. *${entry.item.name}* (x${entry.quantity}) — ${itemTotal}\n`;
+      });
+      msg += `────────────────────────\n`;
+      msg += `*Estimated Subtotal:* ₹${totalTrayPrice.toLocaleString('en-IN')}\n`;
+      if (specialNotes.trim()) {
+        msg += `*Special Instructions:* ${specialNotes.trim()}\n`;
+      }
+      msg += `────────────────────────\n`;
+      msg += `Please confirm preparation time. Thank you!`;
+    } else {
+      msg += `Hello! I am viewing the digital menu at ${locationText || 'the hotel'} and would like to place an order.`;
+    }
+
+    return `https://wa.me/919526319995?text=${encodeURIComponent(msg)}`;
+  };
 
   const isLight = theme === 'light';
 
@@ -187,7 +318,7 @@ function MenuContent() {
       />
 
       {/* ══════════════════════════════════════ */}
-      {/* ── REVAMPED LUXURY HEADER ── */}
+      {/* ── REVAMPED BRAND HEADER ── */}
       {/* ══════════════════════════════════════ */}
       <header
         className={`relative z-40 border-b sticky top-0 px-4 py-2.5 shadow-sm transition-colors ${
@@ -201,7 +332,6 @@ function MenuContent() {
           {/* Top Brand Bar with Official Logo */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
-              {/* Hotel Official Logo */}
               <div className="relative h-8 sm:h-9 w-28 sm:w-32 shrink-0">
                 <Image
                   src={isLight ? '/logo-light.png' : '/logo-dark.png'}
@@ -223,6 +353,19 @@ function MenuContent() {
             </div>
 
             <div className="flex items-center gap-2">
+              {/* Category Drawer Trigger Pill */}
+              <button
+                onClick={() => setIsCategoryDrawerOpen(true)}
+                className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition active:scale-95 ${
+                  isLight
+                    ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50 shadow-xs'
+                    : 'bg-[#0D1B2A] border-[#C5A059]/35 text-[#E5C07B] hover:bg-[#C5A059]/15'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5 text-[#8C6B1C] dark:text-[#E5C07B]" />
+                <span>Index</span>
+              </button>
+
               {/* Location Badge */}
               {locationText && (
                 <div
@@ -334,7 +477,6 @@ function MenuContent() {
 
       {/* ══════════════════════════════════════ */}
       {/* ── LUXURY INFINITE MARQUEE TICKER ── */}
-      {/* Replaces the clunky pill row with motion */}
       {/* ══════════════════════════════════════ */}
       <div
         className={`border-y overflow-hidden relative z-20 py-1.5 backdrop-blur-xs select-none ${
@@ -344,7 +486,6 @@ function MenuContent() {
         }`}
       >
         <div className="animate-marquee whitespace-nowrap text-[10px] sm:text-[11px] font-semibold tracking-[0.2em] uppercase flex items-center">
-          {/* Loop twice for seamless infinite scroll */}
           {[...marqueeItems, ...marqueeItems].map((item, idx) => (
             <span key={idx} className="flex items-center">
               <span className={`mx-3 text-[9px] ${isLight ? 'text-[#8C6B1C]' : 'text-[#C5A059]'}`}>✦</span>
@@ -371,8 +512,8 @@ function MenuContent() {
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={
               activeOutlet === 'landing'
-                ? 'Search biryani, beef, appam, pasta...'
-                : 'Search whisky, brandy, beer, rum...'
+                ? 'Search biryani, fish curry, parotta, tandoor...'
+                : 'Search single malt, brandy, draught beer, rum...'
             }
             className={`w-full rounded-xl pl-10 pr-10 py-2.5 text-sm transition focus:outline-none ${
               isLight
@@ -430,6 +571,14 @@ function MenuContent() {
                   ? 'bg-white text-slate-700 border-slate-200/90 shadow-xs hover:border-slate-300'
                   : 'bg-[#0D1B2A] text-slate-300 border-white/10',
                 icon: true
+              },
+              {
+                key: 'express' as const,
+                label: '⏱️ 15m Express',
+                activeCls: 'bg-blue-700 text-white border-blue-700 shadow-xs',
+                inactiveCls: isLight
+                  ? 'bg-white text-slate-700 border-slate-200/90 shadow-xs hover:border-slate-300'
+                  : 'bg-[#0D1B2A] text-slate-300 border-white/10',
               }
             ].map((f) => (
               <button
@@ -440,7 +589,7 @@ function MenuContent() {
                 }`}
               >
                 {f.dot && <span className={`w-2 h-2 rounded-full ${f.dot} inline-block`} />}
-                {f.icon && <Sparkles className={`w-3 h-3 ${isLight ? 'text-amber-300' : 'text-amber-300'}`} />}
+                {f.icon && <Sparkles className="w-3 h-3 text-amber-300" />}
                 {f.label}
               </button>
             ))}
@@ -449,9 +598,132 @@ function MenuContent() {
       </div>
 
       {/* ══════════════════════════════════════ */}
+      {/* ── 9.8+ CURATED CHEF SIGNATURES ── */}
+      {/* ══════════════════════════════════════ */}
+      {!isSearching && (
+        <div className="max-w-xl mx-auto px-4 pt-2 pb-3 relative z-10">
+          <div className="flex items-center justify-between mb-2.5">
+            <h3 className={`font-serif text-base font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-900' : 'text-[#E5C07B]'}`}>
+              <Sparkles className="w-4 h-4 text-[#8C6B1C] dark:text-[#E5C07B]" />
+              {activeOutlet === 'landing' ? "Chef's Signature Delicacies" : 'Curated Bar Highlights'}
+            </h3>
+            <span className="text-[10px] text-slate-500 font-sans tracking-wide">
+              {activeOutlet === 'landing' ? 'Handcrafted by Master Chefs' : 'Sommelier Selected'}
+            </span>
+          </div>
+
+          <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
+            {activeSignatures.map((sig) => {
+              const trayEntry = tray[sig.id];
+              const inTray = !!trayEntry;
+
+              return (
+                <div
+                  key={sig.id}
+                  className={`w-60 sm:w-64 shrink-0 snap-start rounded-2xl border overflow-hidden flex flex-col transition-all duration-300 ${
+                    isLight
+                      ? 'bg-white border-slate-200/90 shadow-[0_4px_16px_rgba(15,23,42,0.06)]'
+                      : 'bg-[#0D1B2A] border-[#C5A059]/25 shadow-black/40'
+                  }`}
+                >
+                  {/* Hero Photography */}
+                  {sig.image && (
+                    <div className="relative h-28 w-full overflow-hidden bg-slate-100 dark:bg-slate-900">
+                      <Image
+                        src={sig.image}
+                        alt={sig.name}
+                        fill
+                        sizes="(max-width: 640px) 240px, 260px"
+                        className="object-cover hover:scale-105 transition-transform duration-500"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                      <span className="absolute bottom-2 left-2 text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-xs text-amber-300 border border-amber-400/30 flex items-center gap-1">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        {sig.flavorProfile || sig.category}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="p-3 flex-1 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-start justify-between gap-1.5">
+                        <h4 className={`text-sm font-bold leading-snug line-clamp-1 ${isLight ? 'text-slate-900' : 'text-slate-100'}`}>
+                          {sig.name}
+                        </h4>
+                        <span className={`font-sans text-sm font-bold tabular-nums shrink-0 ${isLight ? 'text-slate-900' : 'text-[#E5C07B]'}`}>
+                          {typeof sig.price === 'number' ? `₹${sig.price}` : sig.price}
+                        </span>
+                      </div>
+
+                      {sig.description && (
+                        <p className={`text-[11px] mt-1 line-clamp-2 leading-relaxed ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                          {sig.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Action Row */}
+                    <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+                      <div className="flex items-center gap-1">
+                        {sig.spiceLevel && (
+                          <span className="text-[10px] text-rose-600 font-bold flex items-center" title={`Spice: Level ${sig.spiceLevel}`}>
+                            {Array.from({ length: sig.spiceLevel }).map((_, i) => (
+                              <Flame key={i} className="w-3 h-3 text-rose-500 fill-rose-500" />
+                            ))}
+                          </span>
+                        )}
+                        {sig.volume && (
+                          <span className="text-[10px] text-slate-500 font-medium flex items-center gap-0.5">
+                            <GlassWater className="w-3 h-3" /> {sig.volume}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Tray Stepper Button */}
+                      {inTray ? (
+                        <div className="flex items-center gap-1.5 bg-[#C5A059]/15 border border-[#C5A059] rounded-lg px-2 py-0.5">
+                          <button
+                            onClick={() => decrementTray(sig.id)}
+                            className="p-1 hover:text-rose-600 transition active:scale-90"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="text-xs font-bold px-1 tabular-nums">
+                            {trayEntry.quantity}
+                          </span>
+                          <button
+                            onClick={() => addToTray(sig)}
+                            className="p-1 hover:text-emerald-600 transition active:scale-90"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => addToTray(sig)}
+                          className={`text-xs px-3 py-1 rounded-lg border font-bold flex items-center gap-1 transition active:scale-95 ${
+                            isLight
+                              ? 'bg-[#8C6B1C]/10 border-[#8C6B1C]/30 text-[#8C6B1C] hover:bg-[#8C6B1C]/20'
+                              : 'bg-[#C5A059]/15 border-[#C5A059]/30 text-[#E5C07B] hover:bg-[#C5A059]/25'
+                          }`}
+                        >
+                          <Plus className="w-3 h-3" />
+                          Add to Tray
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════ */}
       {/* ── MENU SECTIONS (Accordion) ── */}
       {/* ══════════════════════════════════════ */}
-      <main className="max-w-xl mx-auto px-4 pb-36 space-y-4 relative z-10 pt-1">
+      <main className="max-w-xl mx-auto px-4 pb-40 space-y-4 relative z-10 pt-1">
         {filteredSections.length === 0 ? (
           /* Empty State */
           <div className="text-center py-20 text-slate-400">
@@ -492,7 +764,7 @@ function MenuContent() {
                 key={section.id}
                 id={section.id}
                 className="scroll-mt-48 fade-in-up"
-                style={{ animationDelay: `${sectionIndex * 40}ms` }}
+                style={{ animationDelay: `${sectionIndex * 30}ms` }}
               >
                 {/* Accordion Header */}
                 <button
@@ -593,7 +865,7 @@ function MenuContent() {
                           </div>
                         )}
 
-                        {/* SOLID Card Background for 100% Crisp Legibility */}
+                        {/* SOLID Card Background */}
                         <div
                           className={`divide-y rounded-2xl border overflow-hidden transition-colors ${
                             isLight
@@ -603,6 +875,8 @@ function MenuContent() {
                         >
                           {sub.items.map((item) => {
                             const hasVegBadge = item.isVeg !== undefined;
+                            const trayEntry = tray[item.id];
+                            const inTray = !!trayEntry;
 
                             return (
                               <div
@@ -614,6 +888,7 @@ function MenuContent() {
                                 }`}
                               >
                                 <div className="flex items-baseline justify-between gap-3">
+                                  {/* Left: Badges & Name */}
                                   <div className="flex items-center gap-2 flex-wrap min-w-0">
                                     {/* Veg/Non-Veg Badge */}
                                     {hasVegBadge && (
@@ -630,7 +905,7 @@ function MenuContent() {
                                       </span>
                                     )}
 
-                                    {/* Item Name */}
+                                    {/* Item Name with Highlight */}
                                     <h4
                                       className={`text-[15px] sm:text-base font-semibold transition ${
                                         isLight
@@ -638,7 +913,7 @@ function MenuContent() {
                                           : 'text-slate-100 group-hover:text-[#E5C07B]'
                                       }`}
                                     >
-                                      {item.name}
+                                      <HighlightedText text={item.name} query={searchQuery} />
                                     </h4>
 
                                     {/* Chef Special Badge */}
@@ -654,16 +929,73 @@ function MenuContent() {
                                         Special
                                       </span>
                                     )}
+
+                                    {/* Express 15m Badge */}
+                                    {item.isExpress && (
+                                      <span
+                                        className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded border flex items-center gap-0.5 ${
+                                          isLight
+                                            ? 'bg-blue-50 text-blue-800 border-blue-200'
+                                            : 'bg-blue-950/60 text-blue-300 border-blue-800/40'
+                                        }`}
+                                      >
+                                        <Zap className="w-2.5 h-2.5" />
+                                        15m Express
+                                      </span>
+                                    )}
+
+                                    {/* Spice Indicator */}
+                                    {item.spiceLevel && (
+                                      <span className="shrink-0 flex items-center text-rose-500">
+                                        {Array.from({ length: item.spiceLevel }).map((_, i) => (
+                                          <Flame key={i} className="w-2.5 h-2.5 fill-rose-500" />
+                                        ))}
+                                      </span>
+                                    )}
                                   </div>
 
-                                  {/* Price: Clean Sans-Serif Matching Item Font Family */}
-                                  <span
-                                    className={`font-sans text-[15px] sm:text-base font-bold shrink-0 tabular-nums tracking-tight ${
-                                      isLight ? 'text-slate-900' : 'text-[#E5C07B]'
-                                    }`}
-                                  >
-                                    {typeof item.price === 'number' ? `₹${item.price}` : item.price}
-                                  </span>
+                                  {/* Right: Price & Quick Add Button */}
+                                  <div className="flex items-center gap-2.5 shrink-0">
+                                    <span
+                                      className={`font-sans text-[15px] sm:text-base font-bold tabular-nums tracking-tight ${
+                                        isLight ? 'text-slate-900' : 'text-[#E5C07B]'
+                                      }`}
+                                    >
+                                      {typeof item.price === 'number' ? `₹${item.price}` : item.price}
+                                    </span>
+
+                                    {inTray ? (
+                                      <div className="flex items-center gap-1 bg-[#C5A059]/15 border border-[#C5A059] rounded-lg px-1.5 py-0.5">
+                                        <button
+                                          onClick={() => decrementTray(item.id)}
+                                          className="p-1 hover:text-rose-600 transition active:scale-90"
+                                        >
+                                          <Minus className="w-3 h-3" />
+                                        </button>
+                                        <span className="text-xs font-bold px-1 tabular-nums">
+                                          {trayEntry.quantity}
+                                        </span>
+                                        <button
+                                          onClick={() => addToTray(item)}
+                                          className="p-1 hover:text-emerald-600 transition active:scale-90"
+                                        >
+                                          <Plus className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => addToTray(item)}
+                                        aria-label={`Add ${item.name} to order tray`}
+                                        className={`w-7 h-7 rounded-lg border flex items-center justify-center transition active:scale-90 ${
+                                          isLight
+                                            ? 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-[#8C6B1C]/10 hover:border-[#8C6B1C]/40 hover:text-[#8C6B1C]'
+                                            : 'bg-[#0D1B2A] border-white/10 text-slate-300 hover:bg-[#C5A059]/20 hover:border-[#C5A059]/40 hover:text-[#E5C07B]'
+                                        }`}
+                                      >
+                                        <Plus className="w-3.5 h-3.5" />
+                                      </button>
+                                    )}
+                                  </div>
                                 </div>
 
                                 {/* Description */}
@@ -673,7 +1005,7 @@ function MenuContent() {
                                       isLight ? 'text-slate-600 font-normal' : 'text-slate-400/90'
                                     }`}
                                   >
-                                    {item.description}
+                                    <HighlightedText text={item.description} query={searchQuery} />
                                   </p>
                                 )}
 
@@ -738,11 +1070,241 @@ function MenuContent() {
         </div>
       </main>
 
+      {/* ══════════════════════════════════════ */}
+      {/* ── 9.8+ CATEGORY INDEX BOTTOM DRAWER ── */}
+      {/* ══════════════════════════════════════ */}
+      {isCategoryDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div
+            onClick={() => setIsCategoryDrawerOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-fade-in"
+          />
+          <div
+            className={`relative z-10 w-full max-w-lg rounded-t-3xl sm:rounded-2xl max-h-[85vh] overflow-hidden flex flex-col border shadow-2xl animate-slide-up ${
+              isLight
+                ? 'bg-[#FAF8F5] border-slate-200 text-slate-900'
+                : 'bg-[#0B1728] border-[#C5A059]/30 text-white'
+            }`}
+          >
+            {/* Drawer Header */}
+            <div className="p-4 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+              <div>
+                <h3 className="font-serif text-lg font-bold flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-[#8C6B1C] dark:text-[#E5C07B]" />
+                  Menu Index
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {activeOutlet === 'landing' ? 'The Landing — 10 Sections' : 'The Cheers Bar — 6 Sections'}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsCategoryDrawerOpen(false)}
+                className="p-2 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Sections List */}
+            <div className="p-3 overflow-y-auto divide-y divide-slate-200/40 dark:divide-white/5 space-y-1">
+              {activeDataset.map((sec) => {
+                const count = countItems(sec);
+                return (
+                  <button
+                    key={sec.id}
+                    onClick={() => jumpToSection(sec.id)}
+                    className={`w-full text-left p-3 rounded-xl flex items-center justify-between transition group ${
+                      isLight
+                        ? 'hover:bg-white active:bg-white/80'
+                        : 'hover:bg-[#132338] active:bg-[#132338]/80'
+                    }`}
+                  >
+                    <div>
+                      <h4 className="font-serif text-sm sm:text-base font-bold group-hover:text-[#8C6B1C] dark:group-hover:text-[#E5C07B] transition flex items-center gap-2">
+                        {sec.romanNumeral && (
+                          <span className="text-xs opacity-60 italic">{sec.romanNumeral}.</span>
+                        )}
+                        {sec.title}
+                      </h4>
+                      {sec.subtitle && (
+                        <p className="text-[11px] text-slate-500 italic mt-0.5 line-clamp-1">
+                          {sec.subtitle}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300">
+                      {count} items
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════ */}
+      {/* ── 9.8+ INTERACTIVE ORDER TRAY MODAL ── */}
+      {/* ══════════════════════════════════════ */}
+      {isTrayOpen && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          <div
+            onClick={() => setIsTrayOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-fade-in"
+          />
+          <div
+            className={`relative z-10 w-full max-w-lg rounded-t-3xl sm:rounded-2xl max-h-[90vh] overflow-hidden flex flex-col border shadow-2xl animate-slide-up ${
+              isLight
+                ? 'bg-[#FAF8F5] border-slate-200 text-slate-900'
+                : 'bg-[#0B1728] border-[#C5A059]/30 text-white'
+            }`}
+          >
+            {/* Tray Header */}
+            <div className="p-4 border-b border-slate-200/80 dark:border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-[#8C6B1C] dark:text-[#E5C07B]" />
+                <div>
+                  <h3 className="font-serif text-lg font-bold">Your Order Tray</h3>
+                  <p className="text-[11px] text-slate-500">
+                    {activeOutlet === 'landing' ? 'The Landing' : 'The Cheers Bar'}
+                    {locationText ? ` · ${locationText}` : ''}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {totalTrayCount > 0 && (
+                  <button
+                    onClick={clearTray}
+                    className="text-xs text-rose-600 hover:text-rose-700 font-medium px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition"
+                  >
+                    Clear All
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsTrayOpen(false)}
+                  className="p-1.5 rounded-full hover:bg-slate-200/50 dark:hover:bg-white/10 transition"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Tray Items List */}
+            <div className="p-4 overflow-y-auto flex-1 divide-y divide-slate-200/60 dark:divide-white/10">
+              {totalTrayCount === 0 ? (
+                <div className="text-center py-12 text-slate-400">
+                  <ShoppingBag className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p className="font-serif text-lg text-slate-600 dark:text-slate-300 font-bold">
+                    Your tray is empty
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Tap the &ldquo;+&rdquo; button beside any dish or drink to build your order.
+                  </p>
+                </div>
+              ) : (
+                Object.values(tray).map(({ item, quantity }) => {
+                  const unitPrice = parsePrice(item.price);
+                  const itemTotal = unitPrice * quantity;
+
+                  return (
+                    <div key={item.id} className="py-3 flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-sm font-semibold truncate">
+                          {item.name}
+                        </h4>
+                        <p className="text-xs text-slate-500 tabular-nums">
+                          ₹{unitPrice} each
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="flex items-center gap-1.5 border border-slate-300 dark:border-white/15 rounded-lg px-2 py-1">
+                          <button
+                            onClick={() => decrementTray(item.id)}
+                            className="p-0.5 hover:text-rose-600 transition"
+                          >
+                            <Minus className="w-3 h-3" />
+                          </button>
+                          <span className="text-xs font-bold px-1 tabular-nums">
+                            {quantity}
+                          </span>
+                          <button
+                            onClick={() => addToTray(item)}
+                            className="p-0.5 hover:text-emerald-600 transition"
+                          >
+                            <Plus className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <span className="text-sm font-bold tabular-nums w-16 text-right">
+                          ₹{itemTotal.toLocaleString('en-IN')}
+                        </span>
+
+                        <button
+                          onClick={() => removeFromTray(item.id)}
+                          className="text-slate-400 hover:text-rose-600 transition p-1"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Special Instructions Input */}
+            {totalTrayCount > 0 && (
+              <div className="px-4 py-3 border-t border-slate-200/60 dark:border-white/10 bg-slate-50/50 dark:bg-black/20">
+                <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider block mb-1">
+                  Cooking Notes / Special Requests (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={specialNotes}
+                  onChange={(e) => setSpecialNotes(e.target.value)}
+                  placeholder="e.g. Less spicy, no onion, extra ice..."
+                  className={`w-full rounded-xl px-3 py-2 text-xs border transition focus:outline-none ${
+                    isLight
+                      ? 'bg-white border-slate-200 text-slate-900 focus:border-[#8C6B1C]'
+                      : 'bg-[#060E18] border-white/10 text-white focus:border-[#C5A059]'
+                  }`}
+                />
+              </div>
+            )}
+
+            {/* Tray Footer & Action Button */}
+            {totalTrayCount > 0 && (
+              <div className="p-4 border-t border-slate-200/80 dark:border-white/10 bg-white dark:bg-[#070F1A]">
+                <div className="flex items-center justify-between mb-3 text-sm">
+                  <span className="text-slate-500 font-medium">
+                    Subtotal ({totalTrayCount} {totalTrayCount === 1 ? 'item' : 'items'}):
+                  </span>
+                  <span className="text-lg font-bold font-sans tabular-nums text-[#8C6B1C] dark:text-[#E5C07B]">
+                    ₹{totalTrayPrice.toLocaleString('en-IN')}
+                  </span>
+                </div>
+
+                <a
+                  href={buildWhatsAppUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:brightness-110 active:scale-[0.98] transition text-sm"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Send Order to Kitchen via WhatsApp
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Scroll to Top */}
       {showScrollTop && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className={`fixed bottom-24 right-4 z-30 w-10 h-10 rounded-full border flex items-center justify-center shadow-lg active:scale-90 transition ${
+          className={`fixed bottom-28 right-4 z-30 w-10 h-10 rounded-full border flex items-center justify-center shadow-lg active:scale-90 transition ${
             isLight
               ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50 shadow-md'
               : 'bg-[#0D1B2A] border-[#C5A059]/40 text-[#E5C07B] hover:bg-[#C5A059]/15'
@@ -752,8 +1314,10 @@ function MenuContent() {
         </button>
       )}
 
-      {/* ── FLOATING ACTION BAR ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-20">
+      {/* ══════════════════════════════════════ */}
+      {/* ── 9.8+ SMART FLOATING ACTION BAR ── */}
+      {/* ══════════════════════════════════════ */}
+      <div className="fixed bottom-0 left-0 right-0 z-30">
         <div
           className={`h-6 ${
             isLight
@@ -762,30 +1326,67 @@ function MenuContent() {
           }`}
         />
         <div
-          className={`px-3 pt-1 ${isLight ? 'bg-[#F8F6F0] border-t border-slate-200/80' : 'bg-[#060E18]'}`}
+          className={`px-3 pt-1 shadow-lg ${isLight ? 'bg-[#F8F6F0] border-t border-slate-200/80' : 'bg-[#060E18] border-t border-white/10'}`}
           style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
         >
-          <div className="max-w-xl mx-auto flex gap-2.5">
-            <a
-              href={`https://wa.me/919526319995?text=${whatsappMsg}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:brightness-110 active:scale-[0.97] transition text-sm"
-            >
-              <MessageSquare className="w-4 h-4" />
-              Order via WhatsApp
-            </a>
-            <a
-              href="tel:+914842610678"
-              className={`border py-3 px-4 rounded-xl flex items-center justify-center gap-2 active:scale-[0.97] transition text-sm font-medium ${
-                isLight
-                  ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50 shadow-xs'
-                  : 'bg-[#0D1B2A] border-[#C5A059]/40 text-[#E5C07B] hover:bg-[#C5A059]/15'
-              }`}
-            >
-              <Phone className="w-4 h-4" />
-              Call
-            </a>
+          <div className="max-w-xl mx-auto flex gap-2.5 items-center">
+            {totalTrayCount > 0 ? (
+              /* Live Order Tray Summary */
+              <>
+                <button
+                  onClick={() => setIsTrayOpen(true)}
+                  className={`flex-1 py-3 px-4 rounded-xl border flex items-center justify-between transition active:scale-[0.98] ${
+                    isLight
+                      ? 'bg-white border-slate-300 text-slate-900 shadow-sm hover:bg-slate-50'
+                      : 'bg-[#0D1B2A] border-[#C5A059]/40 text-white shadow-black/40'
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-[#8C6B1C] dark:bg-[#C5A059] text-white dark:text-black font-bold text-xs flex items-center justify-center">
+                      {totalTrayCount}
+                    </span>
+                    <span className="text-xs font-semibold">View Tray</span>
+                  </div>
+                  <span className="text-sm font-bold tabular-nums text-[#8C6B1C] dark:text-[#E5C07B]">
+                    ₹{totalTrayPrice.toLocaleString('en-IN')}
+                  </span>
+                </button>
+
+                <a
+                  href={buildWhatsAppUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-950/25 hover:brightness-110 active:scale-[0.97] transition text-xs sm:text-sm shrink-0"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Order WhatsApp
+                </a>
+              </>
+            ) : (
+              /* Default Action Bar */
+              <>
+                <a
+                  href={buildWhatsAppUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:brightness-110 active:scale-[0.97] transition text-sm"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  Order via WhatsApp
+                </a>
+                <a
+                  href="tel:+914842610678"
+                  className={`border py-3 px-4 rounded-xl flex items-center justify-center gap-2 active:scale-[0.97] transition text-sm font-medium ${
+                    isLight
+                      ? 'bg-white border-slate-200 text-slate-800 hover:bg-slate-50 shadow-xs'
+                      : 'bg-[#0D1B2A] border-[#C5A059]/40 text-[#E5C07B] hover:bg-[#C5A059]/15'
+                  }`}
+                >
+                  <Phone className="w-4 h-4" />
+                  Call
+                </a>
+              </>
+            )}
           </div>
         </div>
       </div>

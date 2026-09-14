@@ -241,3 +241,33 @@ button:focus-visible {
 .animate-marquee:active {
   animation-play-state: paused;
 }
+
+/* ── Bottom Sheet Drawer Animations ─────── */
+@keyframes slideUpDrawer {
+  from {
+    transform: translateY(100%);
+    opacity: 0.8;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUpDrawer 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInOverlay 0.25s ease forwards;
+}
+
