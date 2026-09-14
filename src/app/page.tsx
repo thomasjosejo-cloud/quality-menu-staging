@@ -4,7 +4,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef, Suspense } fr
 import { useSearchParams } from 'next/navigation';
 import {
   Search, Phone, MessageSquare, Clock, Sparkles, X,
-  Wine, UtensilsCrossed, ChevronDown, ArrowUp, Info, Sun, Moon
+  Wine, UtensilsCrossed, ChevronDown, ArrowUp, Info, Sun, Moon, GlassWater
 } from 'lucide-react';
 import { MENU_DATA } from '@/data/menu-data';
 import { CHEERS_BAR_DATA } from '@/data/cheers-bar-data';
@@ -42,13 +42,12 @@ function MenuContent() {
 
   const greeting = useMemo(() => getGreeting(), []);
 
-  // Compute initial states directly to adhere to React 19 standards
   const [activeOutlet, setActiveOutlet] = useState<OutletType>(() => {
     if (initialOutlet === 'bar' || initialOutlet === 'cheers') return 'cheers';
     return 'landing';
   });
 
-  const [theme, setTheme] = useState<'light' | 'dark'>('light'); // Light is default
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [searchQuery, setSearchQuery] = useState('');
   const [dietaryFilter, setDietaryFilter] = useState<'all' | 'veg' | 'nonveg' | 'special'>('all');
 
@@ -64,7 +63,9 @@ function MenuContent() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const pillBarRef = useRef<HTMLDivElement>(null);
 
-  // Check saved theme preference asynchronously
+  // Fix #16: Theme toggle animation state
+  const [themeTransition, setThemeTransition] = useState(false);
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem('qah-theme') as 'light' | 'dark' | null;
@@ -72,21 +73,18 @@ function MenuContent() {
         requestAnimationFrame(() => setTheme(saved));
       }
     } catch {
-      // ignore storage access errors
+      // ignore
     }
   }, []);
 
   const toggleTheme = () => {
+    setThemeTransition(true);
     const next = theme === 'light' ? 'dark' : 'light';
     setTheme(next);
-    try {
-      localStorage.setItem('qah-theme', next);
-    } catch {
-      // ignore storage errors
-    }
+    try { localStorage.setItem('qah-theme', next); } catch { /* ignore */ }
+    setTimeout(() => setThemeTransition(false), 350);
   };
 
-  // Scroll to top listener
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 600);
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -95,7 +93,6 @@ function MenuContent() {
 
   const activeDataset: MenuSection[] = activeOutlet === 'landing' ? MENU_DATA : CHEERS_BAR_DATA;
 
-  // Filter items
   const filteredSections = useMemo(() => {
     return activeDataset
       .map((section) => {
@@ -181,16 +178,19 @@ function MenuContent() {
 
       {/* ══════════════════════════════════════ */}
       {/* ── HEADER ── */}
+      {/* Fix #1: Fully opaque bg (no bleed-through) */}
+      {/* Fix #2: z-40 (above all content) */}
+      {/* Fix #7: Safe-area padding for notch */}
       {/* ══════════════════════════════════════ */}
       <header
-        className={`relative z-10 border-b backdrop-blur-xl sticky top-0 px-4 py-3 shadow-md transition-colors ${
+        className={`relative z-40 border-b sticky top-0 px-4 py-3 shadow-md transition-colors ${
           isLight
-            ? 'border-[#8C6B1C]/20 bg-[#F8F5EE]/95 shadow-amber-950/5'
-            : 'border-[#C5A059]/20 bg-[#070F1A]/95 shadow-black/30'
+            ? 'border-[#8C6B1C]/20 bg-[#FAF7F0] shadow-amber-950/5'
+            : 'border-[#C5A059]/20 bg-[#060E18] shadow-black/30'
         }`}
+        style={{ paddingTop: 'max(12px, env(safe-area-inset-top))' }}
       >
         <div className="max-w-xl mx-auto">
-          {/* Top Brand Row + Theme & Location */}
           <div className="flex items-center justify-between">
             <div>
               <span
@@ -222,26 +222,27 @@ function MenuContent() {
                 }`}
               >
                 {activeOutlet === 'landing'
-                  ? "Kerala’s Gateway · Nedumbassery"
+                  ? "Kerala's Gateway · Nedumbassery"
                   : "Executive Lounge · Nedumbassery"}
               </p>
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Theme Toggle Button */}
+              {/* Fix #16: Theme Toggle with rotation animation */}
               <button
                 onClick={toggleTheme}
                 aria-label="Toggle light or dark theme"
-                className={`p-2 rounded-xl border transition active:scale-90 flex items-center justify-center ${
+                className={`p-2 rounded-xl border transition-all duration-300 active:scale-90 flex items-center justify-center ${
                   isLight
                     ? 'bg-[#EFE9DC] border-[#8C6B1C]/30 text-[#705411] hover:bg-[#E5DEC9]'
                     : 'bg-[#0D1B2A] border-[#C5A059]/40 text-[#E5C07B] hover:bg-[#C5A059]/15'
                 }`}
               >
-                {isLight ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                <span className={`inline-flex transition-transform duration-300 ${themeTransition ? 'rotate-180 scale-0 opacity-0' : 'rotate-0 scale-100 opacity-100'}`}>
+                  {isLight ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                </span>
               </button>
 
-              {/* Location Badge */}
               {locationText && (
                 <div
                   className={`border rounded-xl px-3 py-1 text-right ${
@@ -265,7 +266,6 @@ function MenuContent() {
             </div>
           </div>
 
-          {/* Time Greeting */}
           {!locationText && (
             <p className={`text-[11px] mt-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
               <span className={`font-medium ${isLight ? 'text-[#8C6B1C]' : 'text-[#E5C07B]'}`}>
@@ -275,7 +275,7 @@ function MenuContent() {
             </p>
           )}
 
-          {/* ── 1-Tap Outlet Switcher ── */}
+          {/* Outlet Switcher */}
           <div
             className={`mt-3 grid grid-cols-2 p-1 rounded-xl border text-xs sm:text-sm ${
               isLight ? 'bg-[#EFE9DC] border-[#8C6B1C]/20' : 'bg-[#0D1B2A] border-white/10'
@@ -322,10 +322,9 @@ function MenuContent() {
       </header>
 
       {/* ══════════════════════════════════════ */}
-      {/* ── CONTROLS: Search + Filters + Pills */}
+      {/* ── CONTROLS ── */}
       {/* ══════════════════════════════════════ */}
       <div className="max-w-xl mx-auto px-4 pt-4 pb-2 relative z-10">
-        {/* Search */}
         <div className="relative">
           <Search
             className={`absolute left-3.5 top-3 w-4 h-4 ${
@@ -357,7 +356,7 @@ function MenuContent() {
           )}
         </div>
 
-        {/* Dietary Filters (Landing only) */}
+        {/* Dietary Filters */}
         {activeOutlet === 'landing' && (
           <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-none text-xs">
             {[
@@ -407,7 +406,8 @@ function MenuContent() {
                 }`}
               >
                 {f.dot && <span className={`w-2 h-2 rounded-full ${f.dot} inline-block`} />}
-                {f.icon && <Sparkles className="w-3 h-3 text-amber-300" />}
+                {/* Fix #11: Sparkles icon color adaptive */}
+                {f.icon && <Sparkles className={`w-3 h-3 ${isLight ? 'text-amber-600' : 'text-amber-300'}`} />}
                 {f.label}
               </button>
             ))}
@@ -442,9 +442,9 @@ function MenuContent() {
       {/* ══════════════════════════════════════ */}
       {/* ── MENU SECTIONS (Accordion) ── */}
       {/* ══════════════════════════════════════ */}
-      <main className="max-w-xl mx-auto px-4 pb-32 space-y-4 relative z-10 pt-1">
+      <main className="max-w-xl mx-auto px-4 pb-36 space-y-4 relative z-10 pt-1">
         {filteredSections.length === 0 ? (
-          /* Empty State */
+          /* Fix #13: Larger empty state button */
           <div className="text-center py-20 text-slate-400">
             <Search
               className={`w-10 h-10 mx-auto mb-3 ${
@@ -464,7 +464,7 @@ function MenuContent() {
                 setSearchQuery('');
                 setDietaryFilter('all');
               }}
-              className={`text-xs px-4 py-2 rounded-lg border transition ${
+              className={`text-sm px-5 py-2.5 rounded-lg border transition font-medium ${
                 isLight
                   ? 'bg-[#8C6B1C]/10 border-[#8C6B1C]/30 text-[#8C6B1C] hover:bg-[#8C6B1C]/20'
                   : 'bg-[#C5A059]/15 border-[#C5A059]/30 text-[#E5C07B] hover:bg-[#C5A059]/25'
@@ -482,10 +482,11 @@ function MenuContent() {
               <section
                 key={section.id}
                 id={section.id}
-                className="scroll-mt-44 fade-in-up"
+                /* Fix #6: Increased scroll-mt to clear header */
+                className="scroll-mt-52 fade-in-up"
                 style={{ animationDelay: `${sectionIndex * 50}ms` }}
               >
-                {/* ── Accordion Header ── */}
+                {/* Accordion Header */}
                 <button
                   onClick={() => !isSearching && toggleSection(section.id)}
                   className="w-full text-left group"
@@ -506,9 +507,7 @@ function MenuContent() {
                         )}
                         <span
                           className={`transition ${
-                            isLight
-                              ? 'group-hover:text-[#8C6B1C]'
-                              : 'group-hover:text-white'
+                            isLight ? 'group-hover:text-[#8C6B1C]' : 'group-hover:text-white'
                           }`}
                         >
                           {section.title}
@@ -551,7 +550,6 @@ function MenuContent() {
                     </div>
                   </div>
 
-                  {/* Gold Divider */}
                   <div className={isLight ? 'gold-divider-light' : 'gold-divider-dark'}>
                     <span
                       className={`text-[10px] ${
@@ -563,22 +561,23 @@ function MenuContent() {
                   </div>
                 </button>
 
-                {/* ── Accordion Content ── */}
+                {/* Fix #3: Accordion uses 9999px max-height to never clip */}
                 <div
                   className={`accordion-content ${isExpanded ? 'expanded' : 'collapsed'}`}
-                  style={{ maxHeight: isExpanded ? `${itemCount * 85 + 350}px` : '0' }}
+                  style={{ maxHeight: isExpanded ? '9999px' : '0' }}
                 >
                   <div className="space-y-5 pt-3 pb-2">
                     {section.subsections?.map((sub, sIdx) => (
                       <div key={sIdx} className="space-y-2">
+                        {/* Fix #10: Subsection titles larger and bolder */}
                         {sub.title && (
                           <h3
-                            className={`text-[11px] uppercase tracking-[0.18em] font-bold pl-1 flex items-center gap-2 ${
+                            className={`text-xs uppercase tracking-[0.18em] font-extrabold pl-1 mt-1 flex items-center gap-2 ${
                               isLight ? 'text-[#705411]' : 'text-[#C5A059]/80'
                             }`}
                           >
                             <span
-                              className={`w-4 h-px ${
+                              className={`w-5 h-px ${
                                 isLight ? 'bg-[#8C6B1C]/40' : 'bg-[#C5A059]/30'
                               }`}
                             />
@@ -593,97 +592,103 @@ function MenuContent() {
                               : 'divide-white/[0.04] bg-[#0D1B2A]/50 border-[#C5A059]/10'
                           }`}
                         >
-                          {sub.items.map((item) => (
-                            <div
-                              key={item.id}
-                              className={`px-3.5 py-3 transition-colors group border-l-2 border-transparent ${
-                                isLight
-                                  ? 'hover:bg-[#8C6B1C]/[0.05] active:bg-[#8C6B1C]/[0.08] hover:border-[#8C6B1C]/50'
-                                  : 'hover:bg-[#C5A059]/[0.04] active:bg-[#C5A059]/[0.07] hover:border-[#C5A059]/40'
-                              }`}
-                            >
-                              {/* ── Item Row: Name ... Price ── */}
-                              <div className="menu-item-row">
-                                {/* Veg/Non-Veg Badge */}
-                                {item.isVeg !== undefined && (
-                                  <span
-                                    className={`w-4 h-4 border-[1.5px] flex items-center justify-center rounded-sm shrink-0 ${
-                                      item.isVeg ? 'border-emerald-600' : 'border-red-600'
-                                    }`}
-                                  >
+                          {sub.items.map((item) => {
+                            const hasVegBadge = item.isVeg !== undefined;
+
+                            return (
+                              <div
+                                key={item.id}
+                                /* Fix #8: Larger touch targets */
+                                className={`px-4 py-3.5 transition-colors group border-l-2 border-transparent ${
+                                  isLight
+                                    ? 'hover:bg-[#8C6B1C]/[0.05] active:bg-[#8C6B1C]/[0.08] hover:border-[#8C6B1C]/50'
+                                    : 'hover:bg-[#C5A059]/[0.04] active:bg-[#C5A059]/[0.07] hover:border-[#C5A059]/40'
+                                }`}
+                              >
+                                <div className="menu-item-row">
+                                  {/* Veg/Non-Veg Badge */}
+                                  {hasVegBadge && (
                                     <span
-                                      className={`w-2 h-2 rounded-full ${
-                                        item.isVeg ? 'bg-emerald-600' : 'bg-red-600'
+                                      className={`w-4 h-4 border-[1.5px] flex items-center justify-center rounded-sm shrink-0 ${
+                                        item.isVeg ? 'border-emerald-600' : 'border-red-600'
                                       }`}
-                                    />
-                                  </span>
-                                )}
+                                    >
+                                      <span
+                                        className={`w-2 h-2 rounded-full ${
+                                          item.isVeg ? 'bg-emerald-600' : 'bg-red-600'
+                                        }`}
+                                      />
+                                    </span>
+                                  )}
 
-                                <h4
-                                  className={`text-[13px] sm:text-sm font-semibold transition shrink-0 ${
-                                    isLight
-                                      ? 'text-[#0F172A] group-hover:text-[#8C6B1C]'
-                                      : 'text-slate-100 group-hover:text-[#E5C07B]'
-                                  }`}
-                                >
-                                  {item.name}
-                                </h4>
-
-                                {item.isChefSpecial && (
-                                  <span
-                                    className={`shrink-0 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border flex items-center gap-0.5 font-bold ${
+                                  {/* Fix #4: Larger item name font */}
+                                  <h4
+                                    className={`text-sm sm:text-base font-semibold transition shrink-0 ${
                                       isLight
-                                        ? 'bg-amber-100 text-amber-900 border-amber-300'
-                                        : 'bg-gradient-to-r from-amber-500/20 to-yellow-500/15 text-amber-300 border-amber-400/30'
+                                        ? 'text-[#0F172A] group-hover:text-[#8C6B1C]'
+                                        : 'text-slate-100 group-hover:text-[#E5C07B]'
                                     }`}
                                   >
-                                    <Sparkles className="w-2.5 h-2.5" />
-                                    Special
+                                    {item.name}
+                                  </h4>
+
+                                  {item.isChefSpecial && (
+                                    <span
+                                      className={`shrink-0 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border flex items-center gap-0.5 font-bold ${
+                                        isLight
+                                          ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                          : 'bg-gradient-to-r from-amber-500/20 to-yellow-500/15 text-amber-300 border-amber-400/30'
+                                      }`}
+                                    >
+                                      {/* Fix #11: Sparkles color adaptive */}
+                                      <Sparkles className={`w-2.5 h-2.5 ${isLight ? 'text-amber-700' : 'text-amber-300'}`} />
+                                      Special
+                                    </span>
+                                  )}
+
+                                  <span
+                                    className={
+                                      isLight ? 'menu-item-dots-light' : 'menu-item-dots-dark'
+                                    }
+                                  />
+
+                                  {/* Fix #5: Larger price font */}
+                                  <span
+                                    className={`font-serif text-base sm:text-lg font-bold shrink-0 tabular-nums ${
+                                      isLight ? 'text-[#8C6B1C]' : 'text-[#E5C07B]'
+                                    }`}
+                                  >
+                                    {typeof item.price === 'number' ? `₹${item.price}` : item.price}
                                   </span>
+                                </div>
+
+                                {/* Fix #9: Description indent conditional on veg badge */}
+                                {item.description && (
+                                  <p
+                                    className={`text-[11px] mt-1 leading-relaxed ${hasVegBadge ? 'pl-6' : 'pl-0'} ${
+                                      isLight ? 'text-slate-600' : 'text-slate-400/90'
+                                    }`}
+                                  >
+                                    {item.description}
+                                  </p>
                                 )}
 
-                                {/* Dotted Leader */}
-                                <span
-                                  className={
-                                    isLight ? 'menu-item-dots-light' : 'menu-item-dots-dark'
-                                  }
-                                />
-
-                                {/* Price */}
-                                <span
-                                  className={`font-serif text-sm sm:text-base font-bold shrink-0 tabular-nums ${
-                                    isLight ? 'text-[#8C6B1C]' : 'text-[#E5C07B]'
-                                  }`}
-                                >
-                                  {typeof item.price === 'number' ? `₹${item.price}` : item.price}
-                                </span>
+                                {/* Fix #14: Replace emoji with Lucide icon */}
+                                {item.volume && (
+                                  <span
+                                    className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-0.5 rounded-full border mt-1.5 font-medium ${hasVegBadge ? 'ml-6' : 'ml-0'} ${
+                                      isLight
+                                        ? 'bg-[#8C6B1C]/10 border-[#8C6B1C]/25 text-[#705411]'
+                                        : 'bg-[#C5A059]/10 border-[#C5A059]/20 text-[#E5C07B]'
+                                    }`}
+                                  >
+                                    <GlassWater className="w-3 h-3" />
+                                    {item.volume}
+                                  </span>
+                                )}
                               </div>
-
-                              {/* Description */}
-                              {item.description && (
-                                <p
-                                  className={`text-[11px] mt-1 leading-relaxed pl-6 ${
-                                    isLight ? 'text-slate-600' : 'text-slate-400/90'
-                                  }`}
-                                >
-                                  {item.description}
-                                </p>
-                              )}
-
-                              {/* Serving Volume (Bar) */}
-                              {item.volume && (
-                                <span
-                                  className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border mt-1 ml-6 font-medium ${
-                                    isLight
-                                      ? 'bg-[#8C6B1C]/10 border-[#8C6B1C]/25 text-[#705411]'
-                                      : 'bg-[#C5A059]/10 border-[#C5A059]/20 text-[#E5C07B]'
-                                  }`}
-                                >
-                                  🥃 Serving: {item.volume}
-                                </span>
-                              )}
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
@@ -694,7 +699,7 @@ function MenuContent() {
           })
         )}
 
-        {/* ── Footer ── */}
+        {/* Footer */}
         <div
           className={`text-center pt-8 pb-4 border-t space-y-2 ${
             isLight ? 'border-[#8C6B1C]/15' : 'border-white/[0.06]'
@@ -714,9 +719,10 @@ function MenuContent() {
           >
             Opposite Cochin International Airport, Nedumbassery, Ernakulam – 683 585
           </p>
+          {/* Fix #15: Tax note contrast improved in dark mode */}
           <div
             className={`flex items-center justify-center gap-1 text-[11px] ${
-              isLight ? 'text-slate-500' : 'text-slate-500'
+              isLight ? 'text-slate-500' : 'text-slate-400'
             }`}
           >
             <Info className="w-3 h-3" />
@@ -729,13 +735,11 @@ function MenuContent() {
         </div>
       </main>
 
-      {/* ══════════════════════════════════════ */}
-      {/* ── SCROLL TO TOP ── */}
-      {/* ══════════════════════════════════════ */}
+      {/* Scroll to Top */}
       {showScrollTop && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className={`fixed bottom-20 right-4 z-30 w-10 h-10 rounded-full border flex items-center justify-center shadow-lg active:scale-90 transition ${
+          className={`fixed bottom-24 right-4 z-30 w-10 h-10 rounded-full border flex items-center justify-center shadow-lg active:scale-90 transition ${
             isLight
               ? 'bg-white border-[#8C6B1C]/30 text-[#8C6B1C] hover:bg-[#8C6B1C]/10'
               : 'bg-[#0D1B2A] border-[#C5A059]/40 text-[#E5C07B] hover:bg-[#C5A059]/15'
@@ -745,18 +749,21 @@ function MenuContent() {
         </button>
       )}
 
-      {/* ══════════════════════════════════════ */}
       {/* ── FLOATING ACTION BAR ── */}
-      {/* ══════════════════════════════════════ */}
+      {/* Fix #7: Safe-area bottom padding for home indicator */}
+      {/* Fix #12: Gradient matches page bg color */}
       <div className="fixed bottom-0 left-0 right-0 z-20">
         <div
           className={`h-6 ${
             isLight
-              ? 'bg-gradient-to-t from-[#F8F5EE] to-transparent'
-              : 'bg-gradient-to-t from-[#070F1A] to-transparent'
+              ? 'bg-gradient-to-t from-[#FAF7F0] to-transparent'
+              : 'bg-gradient-to-t from-[#060E18] to-transparent'
           }`}
         />
-        <div className={`px-3 pb-3 pt-1 ${isLight ? 'bg-[#F8F5EE]/95 border-t border-[#8C6B1C]/15 backdrop-blur-md' : 'bg-[#070F1A]'}`}>
+        <div
+          className={`px-3 pt-1 ${isLight ? 'bg-[#FAF7F0] border-t border-[#8C6B1C]/15' : 'bg-[#060E18]'}`}
+          style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}
+        >
           <div className="max-w-xl mx-auto flex gap-2.5">
             <a
               href={`https://wa.me/919526319995?text=${whatsappMsg}`}
@@ -788,7 +795,7 @@ function MenuContent() {
 /* ── Shimmer Skeleton Loader ─────────────── */
 function MenuSkeleton() {
   return (
-    <div className="min-h-screen bg-[#F8F5EE] text-[#0F172A] flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-[#FAF7F0] text-[#0F172A] flex flex-col items-center justify-center p-6">
       <div className="space-y-3 w-full max-w-xs">
         <div className="text-center mb-6">
           <p className="text-[10px] tracking-[0.3em] text-[#8C6B1C] uppercase font-bold">
@@ -804,7 +811,6 @@ function MenuSkeleton() {
   );
 }
 
-/* ── Page Export ──────────────────────────── */
 export default function DigitalMenuPage() {
   return (
     <Suspense fallback={<MenuSkeleton />}>

@@ -20,6 +20,7 @@ html {
 body {
   font-family: var(--font-jakarta), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
+  background-color: #FAF7F0;
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
