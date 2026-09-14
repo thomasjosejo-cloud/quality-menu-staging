@@ -11,6 +11,7 @@ import {
 import { MENU_DATA, LANDING_SIGNATURES } from '@/data/menu-data';
 import { CHEERS_BAR_DATA, CHEERS_SIGNATURES } from '@/data/cheers-bar-data';
 import { OutletType, MenuSection, MenuItem } from '@/types/menu';
+import CheersBarBanner from '@/components/CheersBarBanner';
 
 /* ── Time-Aware Greeting ─────────────────── */
 function getGreeting(): { text: string; activeSection?: string } {
@@ -595,22 +596,64 @@ function MenuContent() {
             ))}
           </div>
         )}
+
+        {/* Spirit Jump Pills (Cheers Bar only) */}
+        {activeOutlet === 'cheers' && (
+          <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-none text-xs">
+            {[
+              { id: 'all', label: 'All Spirits' },
+              { id: 'scotch-whisky', label: '🥃 Scotch & Whisky' },
+              { id: 'indian-whisky', label: '🥃 Indian Whisky' },
+              { id: 'brandy', label: '🍷 Brandy' },
+              { id: 'rum-vodka', label: '🍹 Rum & Vodka' },
+              { id: 'gin-tequila', label: '🍸 Gin & Tequila' },
+              { id: 'beer-wine', label: '🍺 Chilled Beer' },
+            ].map((chip) => (
+              <button
+                key={chip.id}
+                onClick={() => {
+                  if (chip.id === 'all') {
+                    setSearchQuery('');
+                  } else {
+                    jumpToSection(chip.id);
+                  }
+                }}
+                className={`px-3 py-1.5 rounded-full border whitespace-nowrap flex items-center gap-1.5 transition font-medium ${
+                  isLight
+                    ? 'bg-white text-slate-700 border-slate-200/90 shadow-xs hover:border-slate-300'
+                    : 'bg-[#0D1B2A] text-slate-300 border-white/10 hover:border-white/25'
+                }`}
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ══════════════════════════════════════ */}
-      {/* ── 9.8+ CURATED CHEF SIGNATURES ── */}
+      {/* ── 9.8+ CURATED CHEF SIGNATURES / BAR BANNER ── */}
       {/* ══════════════════════════════════════ */}
       {!isSearching && (
-        <div className="max-w-xl mx-auto px-4 pt-2 pb-3 relative z-10">
-          <div className="flex items-center justify-between mb-2.5">
-            <h3 className={`font-serif text-base font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-900' : 'text-[#E5C07B]'}`}>
-              <Sparkles className="w-4 h-4 text-[#8C6B1C] dark:text-[#E5C07B]" />
-              {activeOutlet === 'landing' ? "Chef's Signature Delicacies" : 'Curated Bar Highlights'}
-            </h3>
-            <span className="text-[10px] text-slate-500 font-sans tracking-wide">
-              {activeOutlet === 'landing' ? 'Handcrafted by Master Chefs' : 'Sommelier Selected'}
-            </span>
-          </div>
+        activeOutlet === 'cheers' ? (
+          <CheersBarBanner
+            items={CHEERS_SIGNATURES}
+            tray={tray}
+            addToTray={addToTray}
+            decrementTray={decrementTray}
+            isLight={isLight}
+          />
+        ) : (
+          <div className="max-w-xl mx-auto px-4 pt-2 pb-3 relative z-10">
+            <div className="flex items-center justify-between mb-2.5">
+              <h3 className={`font-serif text-base font-bold flex items-center gap-1.5 ${isLight ? 'text-slate-900' : 'text-[#E5C07B]'}`}>
+                <Sparkles className="w-4 h-4 text-[#8C6B1C] dark:text-[#E5C07B]" />
+                Chef&apos;s Signature Delicacies
+              </h3>
+              <span className="text-[10px] text-slate-500 font-sans tracking-wide">
+                Handcrafted by Master Chefs
+              </span>
+            </div>
 
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
             {activeSignatures.map((sig) => {
@@ -718,7 +761,8 @@ function MenuContent() {
             })}
           </div>
         </div>
-      )}
+      )
+    )}
 
       {/* ══════════════════════════════════════ */}
       {/* ── MENU SECTIONS (Accordion) ── */}

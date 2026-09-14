@@ -10,7 +10,7 @@ export const CHEERS_BAR_DATA: MenuSection[] = [
       {
         title: "Scotch Whisky (60 ML)",
         items: [
-          { id: "sw1", name: "Johnnie Walker Black Label", price: 750, volume: "60 ML", category: "Scotch", isChefSpecial: true },
+          { id: "sw1", name: "Johnnie Walker Black Label", price: 750, volume: "60 ML", category: "Scotch", isChefSpecial: true, image: "/images/cheers-johnnie-walker.jpg" },
           { id: "sw2", name: "J & B Rare", price: 500, volume: "60 ML", category: "Scotch" },
           { id: "sw3", name: "Teacher's Highland Cream", price: 450, volume: "60 ML", category: "Scotch" },
           { id: "sw4", name: "Johnnie Walker Red Label", price: 400, volume: "60 ML", category: "Scotch" },
@@ -56,7 +56,7 @@ export const CHEERS_BAR_DATA: MenuSection[] = [
       {
         title: "Brandy Selections (60 ML)",
         items: [
-          { id: "br1", name: "Morpheus Blue", price: 380, volume: "60 ML", category: "Brandy", isChefSpecial: true },
+          { id: "br1", name: "Morpheus Blue", price: 380, volume: "60 ML", category: "Brandy", isChefSpecial: true, image: "/images/cheers-morpheus-blue.jpg" },
           { id: "br2", name: "Antiquity XO", price: 350, volume: "60 ML", category: "Brandy" },
           { id: "br3", name: "Zeus", price: 270, volume: "60 ML", category: "Brandy" },
           { id: "br4", name: "Louis Vernant", price: 270, volume: "60 ML", category: "Brandy" },
@@ -109,7 +109,7 @@ export const CHEERS_BAR_DATA: MenuSection[] = [
       {
         title: "Gin & Tequila",
         items: [
-          { id: "gt1", name: "Bombay Sapphire Gin", price: 850, volume: "60 ML", category: "Gin", isChefSpecial: true },
+          { id: "gt1", name: "Bombay Sapphire Gin", price: 850, volume: "60 ML", category: "Gin", isChefSpecial: true, image: "/images/cheers-bombay-sapphire.jpg" },
           { id: "gt2", name: "Buen Amigo Tequila", price: 650, volume: "60 ML", category: "Tequila", isChefSpecial: true },
         ]
       }
@@ -124,7 +124,7 @@ export const CHEERS_BAR_DATA: MenuSection[] = [
       {
         title: "Chilled Bottled Beers (650 ML / 375 ML)",
         items: [
-          { id: "beer1", name: "Budweiser", price: 340, volume: "650 ML", category: "Beer", isChefSpecial: true },
+          { id: "beer1", name: "Budweiser", price: 340, volume: "650 ML", category: "Beer", isChefSpecial: true, image: "/images/cheers-budweiser.jpg" },
           { id: "beer2", name: "Heineken", price: 320, volume: "650 ML", category: "Beer" },
           { id: "beer3", name: "Bro Code", price: 300, volume: "375 ML", category: "Beer" },
           { id: "beer4", name: "KF Ultra Premium Strong", price: 290, volume: "650 ML", category: "Beer" },
@@ -157,22 +157,37 @@ export const CHEERS_BAR_DATA: MenuSection[] = [
 
 export const CHEERS_SIGNATURES: MenuItem[] = [
   {
-    id: "sw1",
-    name: "Johnnie Walker Black Label",
-    price: 750,
-    volume: "60 ML",
-    category: "Scotch",
-    isChefSpecial: true,
-    image: "https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=600&auto=format&fit=crop&q=80"
-  },
-  {
     id: "br1",
     name: "Morpheus Blue",
     price: 380,
     volume: "60 ML",
     category: "Brandy",
+    flavorProfile: "Pouring Perfection · French Oak",
+    description: "Super-premium XO blended grape brandy aged in seasoned French oak casks, delivering rich vanilla, honey, and raisin aromas.",
     isChefSpecial: true,
-    image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=600&auto=format&fit=crop&q=80"
+    image: "/images/cheers-morpheus-blue.jpg",
+  },
+  {
+    id: "sw1",
+    name: "Johnnie Walker Black Label",
+    price: 750,
+    volume: "60 ML",
+    category: "Scotch",
+    flavorProfile: "Aged 12 Years · Signature Peat Smoke",
+    description: "The world's leading blended Scotch whisky, aged 12 years with deep notes of dark fruits, sweet vanilla and signature peat smoke.",
+    isChefSpecial: true,
+    image: "/images/cheers-johnnie-walker.jpg",
+  },
+  {
+    id: "gt1",
+    name: "Bombay Sapphire Gin",
+    price: 850,
+    volume: "60 ML",
+    category: "Gin",
+    flavorProfile: "Vapour Infused · 10 Botanicals",
+    description: "World-renowned premium London Dry Gin, vapour-infused with 10 exotic hand-selected botanicals for clean, bright citrus notes.",
+    isChefSpecial: true,
+    image: "/images/cheers-bombay-sapphire.jpg",
   },
   {
     id: "beer1",
@@ -180,8 +195,10 @@ export const CHEERS_SIGNATURES: MenuItem[] = [
     price: 340,
     volume: "650 ML",
     category: "Beer",
+    flavorProfile: "King of Beers · Beechwood Aged",
+    description: "Classic American-style lager brewed with premium barley malt and beechwood aging for unprecedented crisp refreshment.",
     isChefSpecial: true,
-    image: "https://images.unsplash.com/photo-1608270195577-f27429188eb2?w=600&auto=format&fit=crop&q=80"
-  }
+    image: "/images/cheers-budweiser.jpg",
+  },
 ];
 
