@@ -321,7 +321,7 @@ export const LANDING_SIGNATURES: MenuItem[] = [
     isVeg: false,
     isChefSpecial: true,
     spiceLevel: 2,
-    image: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=600&auto=format&fit=crop&q=80",
+    image: "/images/alleppey-fish-curry.jpg",
   },
   {
     id: "sig_biryani",
@@ -332,18 +332,7 @@ export const LANDING_SIGNATURES: MenuItem[] = [
     isVeg: false,
     isChefSpecial: true,
     spiceLevel: 2,
-    image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=600&auto=format&fit=crop&q=80",
-  },
-  {
-    id: "sig_beef_fry",
-    name: "Syrian Beef Coconut Fry",
-    price: 350,
-    description: "Slow-roasted beef with fresh coconut chips, crushed Malabar black pepper & curry leaves",
-    category: "Regional Specialities",
-    isVeg: false,
-    isChefSpecial: true,
-    spiceLevel: 3,
-    image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=600&auto=format&fit=crop&q=80",
+    image: "/images/thalassery-biryani.jpg",
   },
   {
     id: "sig_tandoori",
@@ -354,7 +343,18 @@ export const LANDING_SIGNATURES: MenuItem[] = [
     isVeg: false,
     isChefSpecial: true,
     spiceLevel: 2,
-    image: "https://images.unsplash.com/photo-1599488615731-7e5c2823ff28?w=600&auto=format&fit=crop&q=80",
+    image: "/images/tandoori-murgh.jpg",
+  },
+  {
+    id: "sig_sandwich",
+    name: "Quality Club Sandwich",
+    price: 290,
+    description: "Grilled chicken, fried egg, crisp lettuce, tomato, cucumber & melted cheese served with fries",
+    category: "Sandwiches & Titbits",
+    isVeg: false,
+    isChefSpecial: true,
+    isExpress: true,
+    image: "/images/club-sandwich.jpg",
   }
 ];
 
