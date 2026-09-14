@@ -613,53 +613,48 @@ function MenuContent() {
                                     : 'hover:bg-[#C5A059]/[0.04] active:bg-[#C5A059]/[0.07] hover:border-[#C5A059]/40'
                                 }`}
                               >
-                                <div className="menu-item-row">
-                                  {/* Veg/Non-Veg Badge */}
-                                  {hasVegBadge && (
-                                    <span
-                                      className={`w-4 h-4 border-[1.5px] flex items-center justify-center rounded-sm shrink-0 ${
-                                        item.isVeg ? 'border-emerald-600' : 'border-red-600'
-                                      }`}
-                                    >
+                                <div className="flex items-baseline justify-between gap-3">
+                                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                    {/* Veg/Non-Veg Badge */}
+                                    {hasVegBadge && (
                                       <span
-                                        className={`w-2 h-2 rounded-full ${
-                                          item.isVeg ? 'bg-emerald-600' : 'bg-red-600'
+                                        className={`w-4 h-4 border-[1.5px] flex items-center justify-center rounded-sm shrink-0 ${
+                                          item.isVeg ? 'border-emerald-600' : 'border-red-600'
                                         }`}
-                                      />
-                                    </span>
-                                  )}
+                                      >
+                                        <span
+                                          className={`w-2 h-2 rounded-full ${
+                                            item.isVeg ? 'bg-emerald-600' : 'bg-red-600'
+                                          }`}
+                                        />
+                                      </span>
+                                    )}
 
-                                  {/* Item Name */}
-                                  <h4
-                                    className={`text-[15px] sm:text-base font-semibold transition shrink-0 ${
-                                      isLight
-                                        ? 'text-slate-900 group-hover:text-[#8C6B1C]'
-                                        : 'text-slate-100 group-hover:text-[#E5C07B]'
-                                    }`}
-                                  >
-                                    {item.name}
-                                  </h4>
-
-                                  {/* Chef Special Badge */}
-                                  {item.isChefSpecial && (
-                                    <span
-                                      className={`shrink-0 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border flex items-center gap-0.5 font-bold ${
+                                    {/* Item Name */}
+                                    <h4
+                                      className={`text-[15px] sm:text-base font-semibold transition ${
                                         isLight
-                                          ? 'bg-amber-50 text-amber-900 border-amber-300'
-                                          : 'bg-gradient-to-r from-amber-500/20 to-yellow-500/15 text-amber-300 border-amber-400/30'
+                                          ? 'text-slate-900 group-hover:text-[#8C6B1C]'
+                                          : 'text-slate-100 group-hover:text-[#E5C07B]'
                                       }`}
                                     >
-                                      <Sparkles className={`w-2.5 h-2.5 ${isLight ? 'text-amber-600' : 'text-amber-300'}`} />
-                                      Special
-                                    </span>
-                                  )}
+                                      {item.name}
+                                    </h4>
 
-                                  {/* Dotted Leader Line */}
-                                  <span
-                                    className={
-                                      isLight ? 'menu-item-dots-light' : 'menu-item-dots-dark'
-                                    }
-                                  />
+                                    {/* Chef Special Badge */}
+                                    {item.isChefSpecial && (
+                                      <span
+                                        className={`shrink-0 text-[9px] uppercase tracking-wider px-1.5 py-0.5 rounded border flex items-center gap-0.5 font-bold ${
+                                          isLight
+                                            ? 'bg-amber-50 text-amber-900 border-amber-300'
+                                            : 'bg-gradient-to-r from-amber-500/20 to-yellow-500/15 text-amber-300 border-amber-400/30'
+                                        }`}
+                                      >
+                                        <Sparkles className={`w-2.5 h-2.5 ${isLight ? 'text-amber-600' : 'text-amber-300'}`} />
+                                        Special
+                                      </span>
+                                    )}
+                                  </div>
 
                                   {/* Price: Clean Sans-Serif Matching Item Font Family */}
                                   <span
