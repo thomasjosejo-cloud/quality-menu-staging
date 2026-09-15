@@ -2,16 +2,18 @@
 
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   Search, Phone, MessageSquare, Clock, Sparkles, X,
   Wine, UtensilsCrossed, ChevronDown, ArrowUp, Info, Sun, Moon,
-  GlassWater, ShoppingBag, Plus, Minus, Trash2, BookOpen, Flame, Zap
+  GlassWater, ShoppingBag, Plus, Minus, Trash2, BookOpen, Flame, Zap, ChefHat
 } from 'lucide-react';
 import { MENU_DATA, LANDING_SIGNATURES } from '@/data/menu-data';
 import { CHEERS_BAR_DATA, CHEERS_SIGNATURES } from '@/data/cheers-bar-data';
 import { OutletType, MenuSection, MenuItem } from '@/types/menu';
 import CheersBarBanner from '@/components/CheersBarBanner';
+import LiveOrderModal from '@/components/LiveOrderModal';
 
 /* ── Time-Aware Greeting ─────────────────── */
 function getGreeting(): { text: string; activeSection?: string } {
@@ -245,6 +247,40 @@ function MenuContent() {
     }, 0);
   }, [tray]);
 
+  const [isLiveOrderModalOpen, setIsLiveOrderModalOpen] = useState(false);
+
+  const handlePlaceLiveOrder = async (location: { roomNumber?: string; tableNumber?: string }) => {
+    const payloadItems = Object.values(tray).map((entry) => ({
+      id: entry.item.id,
+      name: entry.item.name,
+      quantity: entry.quantity,
+      price: entry.item.price,
+      category: entry.item.category,
+      volume: entry.item.volume,
+      notes: specialNotes,
+    }));
+
+    const res = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        roomNumber: location.roomNumber || roomNumber || undefined,
+        tableNumber: location.tableNumber || tableNumber || undefined,
+        outlet: activeOutlet,
+        items: payloadItems,
+        specialInstructions: specialNotes,
+      }),
+    });
+
+    if (!res.ok) throw new Error('Failed to create order');
+    const json = await res.json();
+    if (json.success && json.data) {
+      setTray({});
+      return json.data;
+    }
+    throw new Error(json.error || 'Failed to create order');
+  };
+
   const locationText = tableNumber
     ? `Table ${tableNumber}`
     : roomNumber
@@ -472,6 +508,35 @@ function MenuContent() {
               <Wine className="w-3.5 h-3.5" />
               The Cheers (Bar)
             </button>
+          </div>
+
+          {/* Operations Prototype Switcher */}
+          <div className="flex items-center justify-between gap-1.5 mt-2 pt-2 border-t border-slate-200/50 dark:border-white/5 overflow-x-auto scrollbar-none text-[10px]">
+            <span className="text-[9px] uppercase font-bold text-slate-500 shrink-0">
+              Live Ops:
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Link
+                href="/kitchen"
+                className="px-2 py-0.5 rounded-md bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-bold transition flex items-center gap-1 shrink-0"
+              >
+                <ChefHat className="w-2.5 h-2.5" />
+                <span>Kitchen KDS</span>
+              </Link>
+              <Link
+                href="/bar"
+                className="px-2 py-0.5 rounded-md bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-700 dark:text-blue-300 font-bold transition flex items-center gap-1 shrink-0"
+              >
+                <Wine className="w-2.5 h-2.5" />
+                <span>Cheers BOT</span>
+              </Link>
+              <Link
+                href="/pos"
+                className="px-2 py-0.5 rounded-md bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-700 dark:text-purple-300 font-bold transition flex items-center gap-1 shrink-0"
+              >
+                <span>🛎️ POS Hub</span>
+              </Link>
+            </div>
           </div>
         </div>
       </header>
@@ -1329,14 +1394,24 @@ function MenuContent() {
                   </span>
                 </div>
 
+                {/* Primary Live Order Dispatch (KOT & BOT) */}
+                <button
+                  onClick={() => setIsLiveOrderModalOpen(true)}
+                  className="w-full mb-2 bg-gradient-to-r from-[#C5A059] to-[#DFBE73] text-black font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-black/20 hover:brightness-105 active:scale-[0.98] transition text-sm"
+                >
+                  <ChefHat className="w-4 h-4" />
+                  <span>Send Order to Hotel System (Live KOT &amp; BOT)</span>
+                </button>
+
+                {/* Secondary WhatsApp Backup */}
                 <a
                   href={buildWhatsAppUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/20 hover:brightness-110 active:scale-[0.98] transition text-sm"
+                  className="w-full bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 shadow-sm hover:brightness-110 active:scale-[0.98] transition text-xs"
                 >
-                  <MessageSquare className="w-4 h-4" />
-                  Send Order to Kitchen via WhatsApp
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Or Send via WhatsApp</span>
                 </a>
               </div>
             )}
@@ -1396,14 +1471,22 @@ function MenuContent() {
                   </span>
                 </button>
 
+                <button
+                  onClick={() => setIsLiveOrderModalOpen(true)}
+                  className="bg-gradient-to-r from-[#C5A059] to-[#DFBE73] text-black font-bold py-3 px-3.5 rounded-xl flex items-center justify-center gap-1.5 shadow-lg shadow-black/25 hover:brightness-105 active:scale-[0.97] transition text-xs sm:text-sm shrink-0"
+                >
+                  <ChefHat className="w-4 h-4" />
+                  <span>Place Order</span>
+                </button>
+
                 <a
                   href={buildWhatsAppUrl()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-950/25 hover:brightness-110 active:scale-[0.97] transition text-xs sm:text-sm shrink-0"
+                  className="p-3 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white flex items-center justify-center shadow-lg shadow-emerald-950/25 hover:brightness-110 active:scale-[0.97] transition shrink-0"
+                  title="Order via WhatsApp"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  Order WhatsApp
                 </a>
               </>
             ) : (
@@ -1434,6 +1517,15 @@ function MenuContent() {
           </div>
         </div>
       </div>
+
+      {/* ── Live KOT / BOT Dispatch Modal ── */}
+      <LiveOrderModal
+        isOpen={isLiveOrderModalOpen}
+        onClose={() => setIsLiveOrderModalOpen(false)}
+        defaultRoom={roomNumber}
+        defaultTable={tableNumber}
+        onConfirmOrder={handlePlaceLiveOrder}
+      />
     </div>
   );
 }
