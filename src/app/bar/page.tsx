@@ -48,7 +48,10 @@ export default function BarDisplayPage() {
 
   const fetchBots = useCallback(async () => {
     try {
-      const res = await fetch('/api/orders', { cache: 'no-store' });
+      const res = await fetch(`/api/orders?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
+      });
       if (!res.ok) return;
       const json = await res.json();
       if (json.success && json.data?.bots) {
@@ -71,23 +74,86 @@ export default function BarDisplayPage() {
   }, [prevBotCount, soundEnabled]);
 
   useEffect(() => {
-    let isMounted = true;
-    const poll = async () => {
-      if (!isMounted) return;
-      await fetchBots();
-    };
-    poll();
-    const interval = setInterval(poll, 3000);
+    fetchBots();
+
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource('https://ntfy.sh/qah-kds-sync-v2-nedumbassery/sse');
+      eventSource.onmessage = (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload.message) {
+            const data = typeof payload.message === 'string' ? JSON.parse(payload.message) : payload.message;
+            if (data.event === 'NEW_ORDER' && data.order?.botTickets?.length > 0) {
+              if (soundEnabled) playBarChime();
+              setBots((prev) => {
+                const existingIds = new Set(prev.map((b) => b.id));
+                const toAdd = (data.order.botTickets as BOTTicket[]).filter((b) => !existingIds.has(b.id));
+                return [...toAdd, ...prev];
+              });
+            } else if (data.event === 'STATUS_UPDATE' && data.type === 'bot') {
+              setBots((prev) =>
+                prev.map((bot) =>
+                  bot.id === data.ticketId ? { ...bot, status: data.status as BOTStatus } : bot
+                )
+              );
+            } else if (data.event === 'CLEAR_ORDERS') {
+              setBots([]);
+            }
+          }
+        } catch {}
+      };
+    } catch {}
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        channel = new BroadcastChannel('qah-orders-channel');
+        channel.onmessage = (event) => {
+          const data = event.data;
+          if (data?.event === 'NEW_ORDER' && data.order?.botTickets?.length > 0) {
+            if (soundEnabled) playBarChime();
+            setBots((prev) => {
+              const existingIds = new Set(prev.map((b) => b.id));
+              const toAdd = (data.order.botTickets as BOTTicket[]).filter((b) => !existingIds.has(b.id));
+              return [...toAdd, ...prev];
+            });
+          } else if (data?.event === 'STATUS_UPDATE' && data.type === 'bot') {
+            setBots((prev) =>
+              prev.map((bot) =>
+                bot.id === data.ticketId ? { ...bot, status: data.status as BOTStatus } : bot
+              )
+            );
+          } else if (data?.event === 'CLEAR_ORDERS') {
+            setBots([]);
+          }
+        };
+      }
+    } catch {}
+
+    const interval = setInterval(() => {
+      fetchBots();
+    }, 3000);
+
     return () => {
-      isMounted = false;
+      if (eventSource) eventSource.close();
+      if (channel) channel.close();
       clearInterval(interval);
     };
-  }, [fetchBots]);
+  }, [fetchBots, soundEnabled]);
 
   const handleStatusChange = async (ticketId: string, newStatus: BOTStatus) => {
     setBots((prev) =>
       prev.map((bot) => (bot.id === ticketId ? { ...bot, status: newStatus } : bot))
     );
+
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const channel = new BroadcastChannel('qah-orders-channel');
+        channel.postMessage({ event: 'STATUS_UPDATE', type: 'bot', ticketId, status: newStatus });
+        channel.close();
+      }
+    } catch {}
 
     try {
       await fetch('/api/orders', {

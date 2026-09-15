@@ -47,119 +47,31 @@ function initializeStore() {
     return globalThis.__QAH_ORDER_STORE__;
   }
 
-  const now = Date.now();
-  const tenMinsAgo = new Date(now - 14 * 60 * 1000).toISOString();
-  const fiveMinsAgo = new Date(now - 6 * 60 * 1000).toISOString();
-  const twoMinsAgo = new Date(now - 2 * 60 * 1000).toISOString();
-
-  const initialOrders: Order[] = [
-    {
-      id: 'QAH-1041',
-      roomNumber: '204',
-      outlet: 'both',
-      status: 'active',
-      createdAt: tenMinsAgo,
-      specialInstructions: 'Extra spicy curry please. Cut parottas into quarters.',
-      totalAmount: 1100,
-      paymentStatus: 'charged_to_room',
-      kotTickets: [
-        {
-          id: 'KOT-501',
-          orderId: 'QAH-1041',
-          roomNumber: '204',
-          createdAt: tenMinsAgo,
-          status: 'cooking',
-          specialInstructions: 'Extra spicy curry please. Cut parottas into quarters.',
-          items: [
-            { id: 'reg8', name: 'Alleppey Fish Curry', quantity: 1, price: 340, category: 'Regional', notes: 'Extra spicy' },
-            { id: 'rot1', name: 'Kerala Parotta', quantity: 2, price: 50, category: 'Rotis & Breads' },
-          ]
-        }
-      ],
-      botTickets: [
-        {
-          id: 'BOT-201',
-          orderId: 'QAH-1041',
-          roomNumber: '204',
-          createdAt: tenMinsAgo,
-          status: 'ready',
-          specialInstructions: 'Serve with fresh lime and ice cubes.',
-          items: [
-            { id: 'br1', name: 'Morpheus Blue', quantity: 1, price: 380, volume: '60 ML', category: 'Brandy', notes: 'With soda & ice' }
-          ]
-        }
-      ]
-    },
-    {
-      id: 'QAH-1042',
-      tableNumber: '4',
-      outlet: 'cheers',
-      status: 'active',
-      createdAt: fiveMinsAgo,
-      specialInstructions: 'Chilled glasses for beer.',
-      totalAmount: 1080,
-      paymentStatus: 'unpaid',
-      kotTickets: [
-        {
-          id: 'KOT-502',
-          orderId: 'QAH-1042',
-          tableNumber: '4',
-          createdAt: fiveMinsAgo,
-          status: 'new',
-          specialInstructions: 'Mint chutney on side.',
-          items: [
-            { id: 'tan3', name: 'Chicken Tikka', quantity: 1, price: 400, category: 'Tandoor' }
-          ]
-        }
-      ],
-      botTickets: [
-        {
-          id: 'BOT-202',
-          orderId: 'QAH-1042',
-          tableNumber: '4',
-          createdAt: fiveMinsAgo,
-          status: 'pouring',
-          items: [
-            { id: 'beer1', name: 'Budweiser', quantity: 2, price: 340, volume: '650 ML', category: 'Beer' }
-          ]
-        }
-      ]
-    },
-    {
-      id: 'QAH-1043',
-      roomNumber: '312',
-      outlet: 'landing',
-      status: 'active',
-      createdAt: twoMinsAgo,
-      specialInstructions: 'Brown bread for sandwich if available.',
-      totalAmount: 980,
-      paymentStatus: 'charged_to_room',
-      kotTickets: [
-        {
-          id: 'KOT-503',
-          orderId: 'QAH-1043',
-          roomNumber: '312',
-          createdAt: twoMinsAgo,
-          status: 'new',
-          specialInstructions: 'Brown bread for sandwich if available.',
-          items: [
-            { id: 'sw3', name: 'Quality Club Sandwich', quantity: 2, price: 290, category: 'Sandwiches' },
-            { id: 'bv3', name: 'Cold Coffee', quantity: 2, price: 200, category: 'Beverages' }
-          ]
-        }
-      ],
-      botTickets: []
-    }
-  ];
-
   globalThis.__QAH_ORDER_STORE__ = {
-    orders: initialOrders,
-    nextKotNum: 504,
-    nextBotNum: 203,
-    nextOrderNum: 1044,
+    orders: [],
+    nextKotNum: 501,
+    nextBotNum: 201,
+    nextOrderNum: 1001,
   };
 
   return globalThis.__QAH_ORDER_STORE__;
+}
+
+export function clearAllOrders(): Order[] {
+  const store = initializeStore();
+  store.orders = [];
+  return store.orders;
+}
+
+export function syncExternalOrder(order: Order): Order {
+  const store = initializeStore();
+  const existingIdx = store.orders.findIndex((o) => o.id === order.id);
+  if (existingIdx >= 0) {
+    store.orders[existingIdx] = order;
+  } else {
+    store.orders.unshift(order);
+  }
+  return order;
 }
 
 export function getAllOrders(): Order[] {

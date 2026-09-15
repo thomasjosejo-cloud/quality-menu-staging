@@ -314,6 +314,13 @@ function MenuContent() {
     if (!res.ok) throw new Error('Failed to create order');
     const json = await res.json();
     if (json.success && json.data) {
+      try {
+        if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+          const channel = new BroadcastChannel('qah-orders-channel');
+          channel.postMessage({ event: 'NEW_ORDER', order: json.data });
+          channel.close();
+        }
+      } catch {}
       setTray({});
       return json.data;
     }

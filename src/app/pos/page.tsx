@@ -17,7 +17,10 @@ export default function PosDispatchPage() {
 
   const fetchOrders = useCallback(async () => {
     try {
-      const res = await fetch('/api/orders', { cache: 'no-store' });
+      const res = await fetch(`/api/orders?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' },
+      });
       if (!res.ok) return;
       const json = await res.json();
       if (json.success && json.data?.orders) {
@@ -32,15 +35,33 @@ export default function PosDispatchPage() {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    const poll = async () => {
-      if (!isMounted) return;
-      await fetchOrders();
-    };
-    poll();
-    const interval = setInterval(poll, 3000);
+    fetchOrders();
+
+    let eventSource: EventSource | null = null;
+    try {
+      eventSource = new EventSource('https://ntfy.sh/qah-kds-sync-v2-nedumbassery/sse');
+      eventSource.onmessage = () => {
+        fetchOrders();
+      };
+    } catch {}
+
+    let channel: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        channel = new BroadcastChannel('qah-orders-channel');
+        channel.onmessage = () => {
+          fetchOrders();
+        };
+      }
+    } catch {}
+
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 3000);
+
     return () => {
-      isMounted = false;
+      if (eventSource) eventSource.close();
+      if (channel) channel.close();
       clearInterval(interval);
     };
   }, [fetchOrders]);
