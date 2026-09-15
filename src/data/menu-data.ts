@@ -14,7 +14,20 @@ export const MENU_DATA: MenuSection[] = [
           { id: "b2", name: "Appam with Vegetable Stew", price: 200, isVeg: true, category: "Breakfast" },
           { id: "b3", name: "Puttu with Kadala Curry", price: 200, isVeg: true, category: "Breakfast" },
           { id: "b4", name: "Idli with Sambar & Chutneys", price: 200, description: "Served with sambar, coconut chutney and tomato chutney", isVeg: true, category: "Breakfast" },
-          { id: "b5", name: "Choice of Dosa", price: 200, description: "Masala / Plain / Ghee / Onion. Served with sambar, coconut chutney and tomato chutney", isVeg: true, category: "Breakfast" },
+          {
+            id: "b5",
+            name: "Choice of Dosa",
+            price: 200,
+            description: "Served with sambar, coconut chutney and tomato chutney",
+            isVeg: true,
+            category: "Breakfast",
+            variants: [
+              { id: "b5_masala", name: "Masala Dosa", price: 200, isVeg: true },
+              { id: "b5_plain", name: "Plain Dosa", price: 200, isVeg: true },
+              { id: "b5_ghee", name: "Ghee Dosa", price: 200, isVeg: true },
+              { id: "b5_onion", name: "Onion Dosa", price: 200, isVeg: true },
+            ]
+          },
         ]
       },
       {
@@ -58,7 +71,19 @@ export const MENU_DATA: MenuSection[] = [
       {
         title: "Soups",
         items: [
-          { id: "sp1", name: "Choice of Cream Soup", price: 180, description: "Chicken / Tomato / Mushroom. A rich, creamy soup finished with milk", isVeg: true, category: "Soups" },
+          {
+            id: "sp1",
+            name: "Choice of Cream Soup",
+            price: 180,
+            description: "A rich, velvety soup finished with milk and fresh herbs",
+            isVeg: true,
+            category: "Soups",
+            variants: [
+              { id: "sp1_tomato", name: "Tomato", price: 180, isVeg: true },
+              { id: "sp1_mushroom", name: "Mushroom", price: 180, isVeg: true },
+              { id: "sp1_chicken", name: "Chicken", price: 180, isVeg: false },
+            ]
+          },
           { id: "sp2", name: "Creamy Seafood Chowder", price: 200, description: "Shrimp, fish and calamari simmered in a creamy broth with vegetables", isVeg: false, isChefSpecial: true, category: "Soups" },
           { id: "sp3", name: "Malay Chicken Laksa Soup", price: 200, description: "Chicken soup with coconut milk, curry and lemongrass, inspired by Malaysian laksa", isVeg: false, category: "Soups" },
           { id: "sp4", name: "Hot & Sour Chicken Soup", price: 200, description: "A classic Chinese-style hot and sour chicken soup", isVeg: false, category: "Soups" },
@@ -150,7 +175,20 @@ export const MENU_DATA: MenuSection[] = [
           { id: "ind8", name: "Subzi Makhani", price: 250, description: "Mixed vegetables cooked in a creamy tomato gravy", isVeg: true, category: "Indian" },
           { id: "ind9", name: "Jaipuri Bhindi Fry", price: 250, description: "Okra stir-fried with aromatic Indian spices", isVeg: true, category: "Indian" },
           { id: "ind10", name: "Kofta Curry", price: 250, isVeg: true, category: "Indian" },
-          { id: "ind11", name: "Dal — Choice of Preparation", price: 200, description: "Dal Fry / Dal Tadka / Lasooni Dal / Adraki Dal. Yellow lentils cooked with seasoning", isVeg: true, category: "Indian" },
+          {
+            id: "ind11",
+            name: "Dal — Choice of Preparation",
+            price: 200,
+            description: "Yellow lentils cooked with onion, fresh spices and tempered seasoning",
+            isVeg: true,
+            category: "Indian",
+            variants: [
+              { id: "ind11_tadka", name: "Dal Tadka", price: 200, isVeg: true },
+              { id: "ind11_fry", name: "Dal Fry", price: 200, isVeg: true },
+              { id: "ind11_lasooni", name: "Lasooni Dal", price: 200, isVeg: true },
+              { id: "ind11_adraki", name: "Adraki Dal", price: 200, isVeg: true },
+            ]
+          },
         ]
       },
       {
@@ -173,7 +211,19 @@ export const MENU_DATA: MenuSection[] = [
       {
         title: "Clay Oven Kebabs & Tikka",
         items: [
-          { id: "tan1", name: "Tandoori Murgh", price: "₹420 (Half) / ₹750 (Full)", description: "Chicken marinated with yoghurt and spices, then roasted in the tandoor", isVeg: false, isChefSpecial: true, category: "Tandoor" },
+          {
+            id: "tan1",
+            name: "Tandoori Murgh",
+            price: 420,
+            description: "Whole spring chicken marinated with yoghurt and traditional spices, roasted in the clay tandoor",
+            isVeg: false,
+            isChefSpecial: true,
+            category: "Tandoor",
+            variants: [
+              { id: "tan1_half", name: "Half", price: 420, isVeg: false },
+              { id: "tan1_full", name: "Full", price: 750, isVeg: false },
+            ]
+          },
           { id: "tan2", name: "Murgh Afghani Kebab", price: 400, description: "Boneless chicken in a mild, creamy marinade, cooked in the tandoor", isVeg: false, category: "Tandoor" },
           { id: "tan3", name: "Chicken Tikka", price: 400, description: "Spiced boneless chicken marinated and roasted in the tandoor", isVeg: false, category: "Tandoor" },
           { id: "tan4", name: "Murgh Malai Kebab", price: 400, description: "Tender chicken marinated in a creamy, mildly spiced cheese mixture", isVeg: false, category: "Tandoor" },
@@ -247,12 +297,78 @@ export const MENU_DATA: MenuSection[] = [
         title: "Rice & Noodles",
         items: [
           { id: "rc1", name: "Nasi Goreng", price: 270, description: "Indonesian-style fried rice with Asian sauces and prawn crackers", isVeg: false, category: "Rice" },
-          { id: "rc2", name: "Fried Rice (Veg / Egg / Chicken / Mixed)", price: "₹200 / ₹220 / ₹250", isVeg: true, category: "Rice" },
-          { id: "rc3", name: "Schezwan Fried Rice (Veg / Egg / Chicken / Mixed)", price: "₹200 / ₹220 / ₹250", isVeg: true, category: "Rice" },
+          {
+            id: "rc2",
+            name: "Fried Rice",
+            price: 200,
+            description: "Wok-tossed long-grain rice with seasonal vegetables, egg, tender chicken or mixed meats",
+            category: "Rice",
+            isVeg: true,
+            variants: [
+              { id: "rc2_veg", name: "Veg", price: 200, isVeg: true },
+              { id: "rc2_egg", name: "Egg", price: 220, isVeg: false, containsEgg: true },
+              { id: "rc2_chicken", name: "Chicken", price: 250, isVeg: false },
+              { id: "rc2_mixed", name: "Mixed", price: 250, isVeg: false },
+            ]
+          },
+          {
+            id: "rc3",
+            name: "Schezwan Fried Rice",
+            price: 200,
+            description: "Spicy wok-tossed rice tossed in fiery house-made Sichuan chili sauce",
+            category: "Rice",
+            isVeg: true,
+            spiceLevel: 2,
+            variants: [
+              { id: "rc3_veg", name: "Veg", price: 200, isVeg: true },
+              { id: "rc3_egg", name: "Egg", price: 220, isVeg: false, containsEgg: true },
+              { id: "rc3_chicken", name: "Chicken", price: 250, isVeg: false },
+              { id: "rc3_mixed", name: "Mixed", price: 250, isVeg: false },
+            ]
+          },
           { id: "rc4", name: "Mie Goreng", price: 270, description: "Indonesian fried noodles with Asian sauces and prawn crackers", isVeg: false, category: "Noodles" },
-          { id: "rc5", name: "Noodles (Veg / Egg / Chicken / Mixed)", price: "₹200 / ₹220 / ₹250", isVeg: true, category: "Noodles" },
-          { id: "rc6", name: "Schezwan Noodles (Veg / Egg / Chicken / Mixed)", price: "₹200 / ₹220 / ₹250", isVeg: true, category: "Noodles" },
-          { id: "rc7", name: "Pulao (Vegetable / Peas / Jeera)", price: 190, isVeg: true, category: "Rice" },
+          {
+            id: "rc5",
+            name: "Noodles",
+            price: 200,
+            description: "Classic hakka noodles tossed with crunchy vegetables, egg, succulent chicken or mixed meats",
+            category: "Noodles",
+            isVeg: true,
+            variants: [
+              { id: "rc5_veg", name: "Veg", price: 200, isVeg: true },
+              { id: "rc5_egg", name: "Egg", price: 220, isVeg: false, containsEgg: true },
+              { id: "rc5_chicken", name: "Chicken", price: 250, isVeg: false },
+              { id: "rc5_mixed", name: "Mixed", price: 250, isVeg: false },
+            ]
+          },
+          {
+            id: "rc6",
+            name: "Schezwan Noodles",
+            price: 200,
+            description: "Fiery wok-tossed noodles infused with Sichuan peppers and red chili paste",
+            category: "Noodles",
+            isVeg: true,
+            spiceLevel: 2,
+            variants: [
+              { id: "rc6_veg", name: "Veg", price: 200, isVeg: true },
+              { id: "rc6_egg", name: "Egg", price: 220, isVeg: false, containsEgg: true },
+              { id: "rc6_chicken", name: "Chicken", price: 250, isVeg: false },
+              { id: "rc6_mixed", name: "Mixed", price: 250, isVeg: false },
+            ]
+          },
+          {
+            id: "rc7",
+            name: "Pulao — Choice of Preparation",
+            price: 190,
+            description: "Fragrant basmati rice gently cooked with ghee, whole spices and your choice of vegetables",
+            isVeg: true,
+            category: "Rice",
+            variants: [
+              { id: "rc7_veg", name: "Vegetable", price: 190, isVeg: true },
+              { id: "rc7_peas", name: "Green Peas", price: 190, isVeg: true },
+              { id: "rc7_jeera", name: "Jeera", price: 190, isVeg: true },
+            ]
+          },
           { id: "rc8", name: "Curd Rice", price: 180, isVeg: true, category: "Rice" },
           { id: "rc9", name: "Steamed Rice", price: 150, isVeg: true, category: "Rice" },
         ]
@@ -263,8 +379,31 @@ export const MENU_DATA: MenuSection[] = [
           { id: "br1", name: "Kerala Paratha", price: 50, isVeg: true, category: "Breads" },
           { id: "br2", name: "Chapati", price: 35, isVeg: true, category: "Breads" },
           { id: "br3", name: "Phulka", price: 30, isVeg: true, category: "Breads" },
-          { id: "br4", name: "Cheese Naan / Garlic Naan", price: 60, isVeg: true, category: "Breads" },
-          { id: "br5", name: "Naan / Roti", price: 50, isVeg: true, category: "Breads" },
+          {
+            id: "br4",
+            name: "Cheese Naan / Garlic Naan",
+            price: 60,
+            description: "Freshly baked clay-tandoor bread topped with melted cheese or roasted garlic",
+            isVeg: true,
+            category: "Breads",
+            variants: [
+              { id: "br4_garlic", name: "Garlic Naan", price: 60, isVeg: true },
+              { id: "br4_cheese", name: "Cheese Naan", price: 60, isVeg: true },
+            ]
+          },
+          {
+            id: "br5",
+            name: "Naan / Roti",
+            price: 50,
+            description: "Classic Indian tandoori bread brushed with butter or served plain",
+            isVeg: true,
+            category: "Breads",
+            variants: [
+              { id: "br5_butter", name: "Butter Naan", price: 50, isVeg: true },
+              { id: "br5_plain", name: "Plain Naan", price: 50, isVeg: true },
+              { id: "br5_roti", name: "Tandoori Roti", price: 50, isVeg: true },
+            ]
+          },
           { id: "br6", name: "Kulcha", price: 60, isVeg: true, category: "Breads" },
         ]
       }
@@ -281,7 +420,20 @@ export const MENU_DATA: MenuSection[] = [
           { id: "sn1", name: "Banana Fritters (Pazham Pori)", price: 150, isVeg: true, isChefSpecial: true, category: "Snacks", timing: "3:00 PM – 7:00 PM" },
           { id: "sn2", name: "Cutlets — Vegetable (with French Fries)", price: 150, isVeg: true, category: "Snacks", timing: "3:00 PM – 7:00 PM" },
           { id: "sn3", name: "Cutlets — Chicken / Beef (with French Fries)", price: 190, isVeg: false, category: "Snacks", timing: "3:00 PM – 7:00 PM" },
-          { id: "sn4", name: "Pakora (Vegetable / Onion / Paneer)", price: "₹150 / ₹190", isVeg: true, category: "Snacks", timing: "3:00 PM – 7:00 PM" },
+          {
+            id: "sn4",
+            name: "Pakora Platter",
+            price: 150,
+            description: "Golden spiced gram-flour fritters with mint chutney and onion salad",
+            isVeg: true,
+            category: "Snacks",
+            timing: "3:00 PM – 7:00 PM",
+            variants: [
+              { id: "sn4_veg", name: "Vegetable", price: 150, isVeg: true },
+              { id: "sn4_onion", name: "Onion", price: 150, isVeg: true },
+              { id: "sn4_paneer", name: "Paneer", price: 190, isVeg: true },
+            ]
+          },
         ]
       },
       {

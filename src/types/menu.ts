@@ -1,5 +1,13 @@
 export type OutletType = 'landing' | 'cheers';
 
+export interface ItemVariant {
+  id: string; // e.g. "tan1_half", "rc2_chicken"
+  name: string; // e.g. "Half", "Full", "Veg", "Egg", "Chicken", "Mixed"
+  price: number;
+  isVeg?: boolean;
+  containsEgg?: boolean;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -15,6 +23,7 @@ export interface MenuItem {
   isExpress?: boolean; // Ready in 15 mins (ideal for transit travelers)
   image?: string; // Curated food photography for signature dishes
   flavorProfile?: string; // e.g. "Peaty & Smoky", "Floral & Crisp" for bar items
+  variants?: ItemVariant[]; // Portions (Half/Full) or protein choices (Veg/Egg/Chicken/Mixed)
 }
 
 export interface MenuSection {

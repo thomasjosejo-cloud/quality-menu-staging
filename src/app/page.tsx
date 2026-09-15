@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { MENU_DATA, LANDING_SIGNATURES } from '@/data/menu-data';
 import { CHEERS_BAR_DATA, CHEERS_SIGNATURES } from '@/data/cheers-bar-data';
-import { OutletType, MenuSection, MenuItem } from '@/types/menu';
+import { OutletType, MenuSection, MenuItem, ItemVariant } from '@/types/menu';
 import CheersBarBanner from '@/components/CheersBarBanner';
 import LiveOrderModal from '@/components/LiveOrderModal';
 
@@ -98,7 +98,8 @@ function MenuContent() {
   const [themeTransition, setThemeTransition] = useState(false);
 
   /* ── 9.8+ Interactive Tray & Category Drawer State ── */
-  const [tray, setTray] = useState<Record<string, { item: MenuItem; quantity: number }>>({});
+  const [tray, setTray] = useState<Record<string, { item: MenuItem; variant?: ItemVariant; quantity: number }>>({});
+  const [selectedVariants, setSelectedVariants] = useState<Record<string, string>>({});
   const [isTrayOpen, setIsTrayOpen] = useState(false);
   const [isCategoryDrawerOpen, setIsCategoryDrawerOpen] = useState(false);
   const [specialNotes, setSpecialNotes] = useState('');
@@ -147,11 +148,16 @@ function MenuContent() {
               const matchesSearch =
                 item.name.toLowerCase().includes(q) ||
                 (item.description && item.description.toLowerCase().includes(q)) ||
-                item.category.toLowerCase().includes(q);
+                item.category.toLowerCase().includes(q) ||
+                (item.variants && item.variants.some((v) => v.name.toLowerCase().includes(q)));
 
               let matchesDiet = true;
-              if (dietaryFilter === 'veg') matchesDiet = item.isVeg === true;
-              if (dietaryFilter === 'nonveg') matchesDiet = item.isVeg === false;
+              if (dietaryFilter === 'veg') {
+                matchesDiet = item.isVeg === true || (item.variants && item.variants.some((v) => v.isVeg === true)) === true;
+              }
+              if (dietaryFilter === 'nonveg') {
+                matchesDiet = item.isVeg === false || (item.variants && item.variants.some((v) => v.isVeg === false)) === true;
+              }
               if (dietaryFilter === 'special') matchesDiet = item.isChefSpecial === true;
               if (dietaryFilter === 'express') matchesDiet = item.isExpress === true;
 
@@ -193,32 +199,58 @@ function MenuContent() {
     }, 150);
   }, []);
 
+  /* ── Variant Selection Helper ── */
+  const getActiveVariant = useCallback(
+    (item: MenuItem): ItemVariant | undefined => {
+      if (!item.variants || item.variants.length === 0) return undefined;
+      const selectedId = selectedVariants[item.id];
+      if (selectedId) {
+        const found = item.variants.find((v) => v.id === selectedId);
+        if (found) return found;
+      }
+      if (dietaryFilter === 'veg') {
+        const vegVar = item.variants.find((v) => v.isVeg === true);
+        if (vegVar) return vegVar;
+      }
+      if (dietaryFilter === 'nonveg') {
+        const nonVegVar = item.variants.find((v) => v.isVeg === false);
+        if (nonVegVar) return nonVegVar;
+      }
+      return item.variants[0];
+    },
+    [selectedVariants, dietaryFilter]
+  );
+
   /* ── Tray Manipulation ── */
-  const addToTray = (item: MenuItem) => {
+  const addToTray = (item: MenuItem, variant?: ItemVariant) => {
+    const activeVar = variant || getActiveVariant(item);
+    const key = activeVar ? activeVar.id : item.id;
+
     setTray((prev) => {
-      const existing = prev[item.id];
+      const existing = prev[key];
       return {
         ...prev,
-        [item.id]: {
+        [key]: {
           item,
+          variant: activeVar,
           quantity: existing ? existing.quantity + 1 : 1,
         },
       };
     });
   };
 
-  const decrementTray = (itemId: string) => {
+  const decrementTray = (key: string) => {
     setTray((prev) => {
-      const existing = prev[itemId];
+      const existing = prev[key];
       if (!existing) return prev;
       if (existing.quantity <= 1) {
         const next = { ...prev };
-        delete next[itemId];
+        delete next[key];
         return next;
       }
       return {
         ...prev,
-        [itemId]: {
+        [key]: {
           ...existing,
           quantity: existing.quantity - 1,
         },
@@ -226,10 +258,10 @@ function MenuContent() {
     });
   };
 
-  const removeFromTray = (itemId: string) => {
+  const removeFromTray = (key: string) => {
     setTray((prev) => {
       const next = { ...prev };
-      delete next[itemId];
+      delete next[key];
       return next;
     });
   };
@@ -242,22 +274,30 @@ function MenuContent() {
 
   const totalTrayPrice = useMemo(() => {
     return Object.values(tray).reduce((sum, entry) => {
-      return sum + parsePrice(entry.item.price) * entry.quantity;
+      const unitPrice = entry.variant ? entry.variant.price : parsePrice(entry.item.price);
+      return sum + unitPrice * entry.quantity;
     }, 0);
   }, [tray]);
 
   const [isLiveOrderModalOpen, setIsLiveOrderModalOpen] = useState(false);
 
   const handlePlaceLiveOrder = async (location: { roomNumber?: string; tableNumber?: string }) => {
-    const payloadItems = Object.values(tray).map((entry) => ({
-      id: entry.item.id,
-      name: entry.item.name,
-      quantity: entry.quantity,
-      price: entry.item.price,
-      category: entry.item.category,
-      volume: entry.item.volume,
-      notes: specialNotes,
-    }));
+    const payloadItems = Object.values(tray).map((entry) => {
+      const displayName = entry.variant
+        ? `${entry.item.name} (${entry.variant.name})`
+        : entry.item.name;
+      const unitPrice = entry.variant ? entry.variant.price : parsePrice(entry.item.price);
+
+      return {
+        id: entry.variant ? entry.variant.id : entry.item.id,
+        name: displayName,
+        quantity: entry.quantity,
+        price: unitPrice,
+        category: entry.item.category,
+        volume: entry.item.volume,
+        notes: specialNotes,
+      };
+    });
 
     const res = await fetch('/api/orders', {
       method: 'POST',
@@ -297,10 +337,12 @@ function MenuContent() {
     if (totalTrayCount > 0) {
       msg += `*ITEMS ORDERED:*\n`;
       Object.values(tray).forEach((entry, idx) => {
-        const itemTotal = typeof entry.item.price === 'number'
-          ? `₹${entry.item.price * entry.quantity}`
-          : `${entry.item.price}`;
-        msg += `${idx + 1}. *${entry.item.name}* (x${entry.quantity}) — ${itemTotal}\n`;
+        const displayName = entry.variant
+          ? `${entry.item.name} (${entry.variant.name})`
+          : entry.item.name;
+        const unitPrice = entry.variant ? entry.variant.price : parsePrice(entry.item.price);
+        const itemTotal = `₹${(unitPrice * entry.quantity).toLocaleString('en-IN')}`;
+        msg += `${idx + 1}. *${displayName}* (x${entry.quantity}) — ${itemTotal}\n`;
       });
       msg += `────────────────────────\n`;
       msg += `*Estimated Subtotal:* ₹${totalTrayPrice.toLocaleString('en-IN')}\n`;
@@ -692,8 +734,11 @@ function MenuContent() {
 
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none snap-x snap-mandatory">
             {activeSignatures.map((sig) => {
-              const trayEntry = tray[sig.id];
+              const activeSigVariant = getActiveVariant(sig);
+              const sigKey = activeSigVariant ? activeSigVariant.id : sig.id;
+              const trayEntry = tray[sigKey];
               const inTray = !!trayEntry;
+              const sigPrice = activeSigVariant ? activeSigVariant.price : parsePrice(sig.price);
 
               return (
                 <div
@@ -729,7 +774,7 @@ function MenuContent() {
                           {sig.name}
                         </h4>
                         <span className={`font-sans text-sm font-bold tabular-nums shrink-0 ${isLight ? 'text-slate-900' : 'text-[#E5C07B]'}`}>
-                          {typeof sig.price === 'number' ? `₹${sig.price}` : sig.price}
+                          ₹{sigPrice}
                         </span>
                       </div>
 
@@ -761,7 +806,7 @@ function MenuContent() {
                       {inTray ? (
                         <div className="flex items-center gap-1.5 bg-[#C5A059]/15 border border-[#C5A059] rounded-lg px-2 py-0.5">
                           <button
-                            onClick={() => decrementTray(sig.id)}
+                            onClick={() => decrementTray(sigKey)}
                             className="p-1 hover:text-rose-600 transition active:scale-90"
                           >
                             <Minus className="w-3 h-3" />
@@ -770,7 +815,7 @@ function MenuContent() {
                             {trayEntry.quantity}
                           </span>
                           <button
-                            onClick={() => addToTray(sig)}
+                            onClick={() => addToTray(sig, activeSigVariant)}
                             className="p-1 hover:text-emerald-600 transition active:scale-90"
                           >
                             <Plus className="w-3 h-3" />
@@ -778,7 +823,7 @@ function MenuContent() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => addToTray(sig)}
+                          onClick={() => addToTray(sig, activeSigVariant)}
                           className={`text-xs px-3 py-1 rounded-lg border font-bold flex items-center gap-1 transition active:scale-95 ${
                             isLight
                               ? 'bg-[#8C6B1C]/10 border-[#8C6B1C]/30 text-[#8C6B1C] hover:bg-[#8C6B1C]/20'
@@ -953,8 +998,14 @@ function MenuContent() {
                           }`}
                         >
                           {sub.items.map((item) => {
-                            const hasVegBadge = item.isVeg !== undefined;
-                            const trayEntry = tray[item.id];
+                            const activeVariant = getActiveVariant(item);
+                            const effectivePrice = activeVariant ? activeVariant.price : parsePrice(item.price);
+                            const effectiveIsVeg = activeVariant?.isVeg !== undefined ? activeVariant.isVeg : item.isVeg;
+                            const effectiveEgg = activeVariant?.containsEgg !== undefined ? activeVariant.containsEgg : item.containsEgg;
+                            const hasVegBadge = effectiveIsVeg !== undefined;
+
+                            const trayKey = activeVariant ? activeVariant.id : item.id;
+                            const trayEntry = tray[trayKey];
                             const inTray = !!trayEntry;
 
                             return (
@@ -973,12 +1024,12 @@ function MenuContent() {
                                     {hasVegBadge && (
                                       <span
                                         className={`w-4 h-4 border-[1.5px] flex items-center justify-center rounded-sm shrink-0 ${
-                                          item.isVeg ? 'border-emerald-600' : 'border-red-600'
+                                          effectiveIsVeg ? 'border-emerald-600' : effectiveEgg ? 'border-amber-600' : 'border-red-600'
                                         }`}
                                       >
                                         <span
                                           className={`w-2 h-2 rounded-full ${
-                                            item.isVeg ? 'bg-emerald-600' : 'bg-red-600'
+                                            effectiveIsVeg ? 'bg-emerald-600' : effectiveEgg ? 'bg-amber-600' : 'bg-red-600'
                                           }`}
                                         />
                                       </span>
@@ -1040,14 +1091,15 @@ function MenuContent() {
                                         isLight ? 'text-slate-900' : 'text-[#E5C07B]'
                                       }`}
                                     >
-                                      {typeof item.price === 'number' ? `₹${item.price}` : item.price}
+                                      ₹{effectivePrice}
                                     </span>
 
                                     {inTray ? (
                                       <div className="flex items-center gap-1 bg-[#C5A059]/15 border border-[#C5A059] rounded-lg px-1.5 py-0.5">
                                         <button
-                                          onClick={() => decrementTray(item.id)}
+                                          onClick={() => decrementTray(trayKey)}
                                           className="p-1 hover:text-rose-600 transition active:scale-90"
+                                          aria-label="Decrease quantity"
                                         >
                                           <Minus className="w-3 h-3" />
                                         </button>
@@ -1055,15 +1107,16 @@ function MenuContent() {
                                           {trayEntry.quantity}
                                         </span>
                                         <button
-                                          onClick={() => addToTray(item)}
+                                          onClick={() => addToTray(item, activeVariant)}
                                           className="p-1 hover:text-emerald-600 transition active:scale-90"
+                                          aria-label="Increase quantity"
                                         >
                                           <Plus className="w-3 h-3" />
                                         </button>
                                       </div>
                                     ) : (
                                       <button
-                                        onClick={() => addToTray(item)}
+                                        onClick={() => addToTray(item, activeVariant)}
                                         aria-label={`Add ${item.name} to order tray`}
                                         className={`w-7 h-7 rounded-lg border flex items-center justify-center transition active:scale-90 ${
                                           isLight
@@ -1086,6 +1139,60 @@ function MenuContent() {
                                   >
                                     <HighlightedText text={item.description} query={searchQuery} />
                                   </p>
+                                )}
+
+                                {/* Interactive Variant Selector Pills */}
+                                {item.variants && item.variants.length > 0 && (
+                                  <div className={`mt-2.5 flex items-center gap-1.5 flex-wrap ${hasVegBadge ? 'pl-6' : 'pl-0'}`}>
+                                    {item.variants.map((variant) => {
+                                      const isSelected = activeVariant?.id === variant.id;
+                                      const vTrayCount = tray[variant.id]?.quantity || 0;
+                                      return (
+                                        <button
+                                          key={variant.id}
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedVariants((prev) => ({ ...prev, [item.id]: variant.id }));
+                                          }}
+                                          className={`text-[11px] px-2.5 py-1 rounded-lg border transition-all flex items-center gap-1.5 active:scale-95 ${
+                                            isSelected
+                                              ? isLight
+                                                ? 'bg-[#8C6B1C] text-white border-[#8C6B1C] shadow-xs font-semibold'
+                                                : 'bg-[#C5A059] text-black border-[#C5A059] shadow-xs font-bold'
+                                              : isLight
+                                              ? 'bg-slate-50 text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-100'
+                                              : 'bg-[#0D1B2A] text-slate-300 border-white/10 hover:border-white/20 hover:bg-white/5'
+                                          }`}
+                                        >
+                                          {variant.isVeg !== undefined && (
+                                            <span
+                                              className={`w-1.5 h-1.5 rounded-full ${
+                                                variant.isVeg ? 'bg-emerald-500' : variant.containsEgg ? 'bg-amber-500' : 'bg-red-500'
+                                              }`}
+                                            />
+                                          )}
+                                          <span>{variant.name}</span>
+                                          <span className={`text-[10px] tabular-nums font-medium ${
+                                            isSelected ? (isLight ? 'text-amber-100' : 'text-slate-900') : 'opacity-70'
+                                          }`}>
+                                            ₹{variant.price}
+                                          </span>
+                                          {vTrayCount > 0 && (
+                                            <span
+                                              className={`text-[9px] px-1.5 py-0.2 rounded-full font-bold tabular-nums ${
+                                                isSelected
+                                                  ? isLight ? 'bg-white text-[#8C6B1C]' : 'bg-black text-[#C5A059]'
+                                                  : 'bg-[#C5A059]/25 text-[#C5A059] border border-[#C5A059]/40'
+                                              }`}
+                                            >
+                                              {vTrayCount}
+                                            </span>
+                                          )}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
                                 )}
 
                                 {/* Serving Volume (Bar) */}
@@ -1281,17 +1388,40 @@ function MenuContent() {
                   </p>
                 </div>
               ) : (
-                Object.values(tray).map(({ item, quantity }) => {
-                  const unitPrice = parsePrice(item.price);
+                Object.values(tray).map(({ item, variant, quantity }) => {
+                  const unitPrice = variant ? variant.price : parsePrice(item.price);
                   const itemTotal = unitPrice * quantity;
+                  const key = variant ? variant.id : item.id;
+                  const effectiveVeg = variant?.isVeg !== undefined ? variant.isVeg : item.isVeg;
+                  const effectiveEgg = variant?.containsEgg !== undefined ? variant.containsEgg : item.containsEgg;
 
                   return (
-                    <div key={item.id} className="py-3 flex items-center justify-between gap-3">
+                    <div key={key} className="py-3 flex items-center justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-sm font-semibold truncate">
-                          {item.name}
-                        </h4>
-                        <p className="text-xs text-slate-500 tabular-nums">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {effectiveVeg !== undefined && (
+                            <span
+                              className={`w-3 h-3 border-[1px] flex items-center justify-center rounded-xs shrink-0 ${
+                                effectiveVeg ? 'border-emerald-600' : effectiveEgg ? 'border-amber-600' : 'border-red-600'
+                              }`}
+                            >
+                              <span
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  effectiveVeg ? 'bg-emerald-600' : effectiveEgg ? 'bg-amber-600' : 'bg-red-600'
+                                }`}
+                              />
+                            </span>
+                          )}
+                          <h4 className="text-sm font-semibold truncate">
+                            {item.name}
+                          </h4>
+                          {variant && (
+                            <span className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-md font-bold bg-[#C5A059]/15 text-[#8C6B1C] dark:text-[#E5C07B] border border-[#C5A059]/30">
+                              {variant.name}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 tabular-nums mt-0.5">
                           ₹{unitPrice} each
                         </p>
                       </div>
@@ -1299,8 +1429,9 @@ function MenuContent() {
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="flex items-center gap-1.5 border border-slate-300 dark:border-white/15 rounded-lg px-2 py-1">
                           <button
-                            onClick={() => decrementTray(item.id)}
+                            onClick={() => decrementTray(key)}
                             className="p-0.5 hover:text-rose-600 transition"
+                            aria-label="Decrease quantity"
                           >
                             <Minus className="w-3 h-3" />
                           </button>
@@ -1308,8 +1439,9 @@ function MenuContent() {
                             {quantity}
                           </span>
                           <button
-                            onClick={() => addToTray(item)}
+                            onClick={() => addToTray(item, variant)}
                             className="p-0.5 hover:text-emerald-600 transition"
+                            aria-label="Increase quantity"
                           >
                             <Plus className="w-3 h-3" />
                           </button>
@@ -1320,8 +1452,9 @@ function MenuContent() {
                         </span>
 
                         <button
-                          onClick={() => removeFromTray(item.id)}
+                          onClick={() => removeFromTray(key)}
                           className="text-slate-400 hover:text-rose-600 transition p-1"
+                          aria-label="Remove item"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
