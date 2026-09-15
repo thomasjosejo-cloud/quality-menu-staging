@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, Suspense } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import {
   Search, Phone, MessageSquare, Clock, Sparkles, X,
@@ -508,35 +507,6 @@ function MenuContent() {
               <Wine className="w-3.5 h-3.5" />
               The Cheers (Bar)
             </button>
-          </div>
-
-          {/* Operations Prototype Switcher */}
-          <div className="flex items-center justify-between gap-1.5 mt-2 pt-2 border-t border-slate-200/50 dark:border-white/5 overflow-x-auto scrollbar-none text-[10px]">
-            <span className="text-[9px] uppercase font-bold text-slate-500 shrink-0">
-              Live Ops:
-            </span>
-            <div className="flex items-center gap-1.5">
-              <Link
-                href="/kitchen"
-                className="px-2 py-0.5 rounded-md bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-bold transition flex items-center gap-1 shrink-0"
-              >
-                <ChefHat className="w-2.5 h-2.5" />
-                <span>Kitchen KDS</span>
-              </Link>
-              <Link
-                href="/bar"
-                className="px-2 py-0.5 rounded-md bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-700 dark:text-blue-300 font-bold transition flex items-center gap-1 shrink-0"
-              >
-                <Wine className="w-2.5 h-2.5" />
-                <span>Cheers BOT</span>
-              </Link>
-              <Link
-                href="/pos"
-                className="px-2 py-0.5 rounded-md bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-purple-700 dark:text-purple-300 font-bold transition flex items-center gap-1 shrink-0"
-              >
-                <span>🛎️ POS Hub</span>
-              </Link>
-            </div>
           </div>
         </div>
       </header>

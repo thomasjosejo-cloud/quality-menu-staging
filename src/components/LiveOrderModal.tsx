@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link';
 import {
-  ChefHat, Wine, CheckCircle2, ArrowRight, X, Hotel,
+  ChefHat, Wine, CheckCircle2, X, Hotel,
   UtensilsCrossed, Sparkles, Loader2
 } from 'lucide-react';
 import { Order } from '@/types/order';
@@ -95,7 +94,7 @@ export default function LiveOrderModal({
               </strong>
             </p>
 
-            {/* KOT / BOT Dispatch Cards */}
+            {/* KOT / BOT Dispatch Status Cards */}
             <div className="my-4 space-y-2 text-left text-xs">
               {createdOrder.kotTickets.map((kot) => (
                 <div
@@ -106,21 +105,16 @@ export default function LiveOrderModal({
                     <ChefHat className="w-4 h-4 text-amber-400 shrink-0" />
                     <div>
                       <span className="font-bold text-amber-300 block">
-                        Kitchen Ticket ({kot.id})
+                        Kitchen Order ({kot.id})
                       </span>
                       <span className="text-[11px] text-slate-300">
-                        {kot.items.length} food {kot.items.length === 1 ? 'item' : 'items'} sent to Main Kitchen
+                        {kot.items.length} food {kot.items.length === 1 ? 'item' : 'items'} sent to Master Chef
                       </span>
                     </div>
                   </div>
-                  <Link
-                    href="/kitchen"
-                    target="_blank"
-                    className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 transition flex items-center gap-1 shrink-0"
-                  >
-                    <span>View KDS</span>
-                    <ArrowRight className="w-2.5 h-2.5" />
-                  </Link>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+                    Preparing
+                  </span>
                 </div>
               ))}
 
@@ -133,46 +127,30 @@ export default function LiveOrderModal({
                     <Wine className="w-4 h-4 text-blue-400 shrink-0" />
                     <div>
                       <span className="font-bold text-blue-300 block">
-                        Bar Ticket ({bot.id})
+                        The Cheers Bar Order ({bot.id})
                       </span>
                       <span className="text-[11px] text-slate-300">
-                        {bot.items.length} beverage {bot.items.length === 1 ? 'item' : 'items'} sent to The Cheers Bar
+                        {bot.items.length} beverage {bot.items.length === 1 ? 'item' : 'items'} sent to Bar Counter
                       </span>
                     </div>
                   </div>
-                  <Link
-                    href="/bar"
-                    target="_blank"
-                    className="text-[10px] font-bold px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 transition flex items-center gap-1 shrink-0"
-                  >
-                    <span>View Bar</span>
-                    <ArrowRight className="w-2.5 h-2.5" />
-                  </Link>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 shrink-0">
+                    Dispensing
+                  </span>
                 </div>
               ))}
             </div>
 
             <p className="text-[11px] text-slate-400 italic mb-4">
-              Our chef and sommelier have begun preparing your order. Estimated time: 20–25 minutes.
+              Our culinary and sommelier team have begun preparing your order. Estimated delivery: 20–25 minutes.
             </p>
 
-            <div className="flex gap-2">
-              <Link
-                href="/pos"
-                target="_blank"
-                className="flex-1 py-2.5 px-3 rounded-xl bg-purple-600/30 hover:bg-purple-600/40 text-purple-200 border border-purple-400/30 font-bold text-xs flex items-center justify-center gap-1.5 transition"
-              >
-                <span>View Dispatch POS</span>
-                <ArrowRight className="w-3 h-3" />
-              </Link>
-
-              <button
-                onClick={handleClose}
-                className="flex-1 py-2.5 px-3 rounded-xl bg-[#C5A059] text-black font-bold text-xs hover:bg-[#DFBE73] transition active:scale-95"
-              >
-                Done
-              </button>
-            </div>
+            <button
+              onClick={handleClose}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#C5A059] to-[#DFBE73] text-black font-bold text-sm hover:brightness-105 transition active:scale-[0.98] shadow-lg"
+            >
+              Done, Thank You!
+            </button>
           </div>
         ) : (
           /* State 2: Location Verification Form */
